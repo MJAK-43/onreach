@@ -22,7 +22,7 @@ jobs:
 
       - name: Build deployment archive
         run: |
-          tar -czf /tmp/onreach-deploy.tar.gz \
+          tar -czf onreach-deploy.tar.gz \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=backend/vendor \
@@ -34,6 +34,7 @@ jobs:
             --exclude=backend/.env.dev \
             --exclude=backend/.env.test \
             -C "${{ github.workspace }}" .
+          ls -lh onreach-deploy.tar.gz
 
       - name: Upload to DEV server
         uses: appleboy/scp-action@v1
@@ -41,8 +42,9 @@ jobs:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          source: /tmp/onreach-deploy.tar.gz
+          source: onreach-deploy.tar.gz
           target: /tmp
+          overwrite: true
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.2
@@ -55,8 +57,18 @@ jobs:
             set -e
             APP_DIR="/opt/onreach/app"
             mkdir -p "$APP_DIR"
-            tar -xzf /tmp/onreach-deploy.tar.gz -C "$APP_DIR"
-            rm -f /tmp/onreach-deploy.tar.gz
+            ARCHIVE="/tmp/onreach-deploy.tar.gz"
+            if [ ! -f "$ARCHIVE" ]; then
+              ARCHIVE="$(find /tmp -maxdepth 2 -name 'onreach-deploy.tar.gz' -type f | head -1)"
+            fi
+            if [ -z "$ARCHIVE" ] || [ ! -f "$ARCHIVE" ]; then
+              echo "ERROR: deployment archive not found under /tmp"
+              ls -la /tmp
+              exit 1
+            fi
+            echo "Using archive: $ARCHIVE"
+            tar -xzf "$ARCHIVE" -C "$APP_DIR"
+            rm -f "$ARCHIVE" /tmp/onreach-deploy.tar.gz
             chmod +x "$APP_DIR"/deployments/scripts/*.sh "$APP_DIR"/backend/docker/entrypoint.sh 2>/dev/null || true
             if [ ! -f "$APP_DIR/.env.dev" ]; then
               echo "ERROR: .env.dev missing on server — run initial deploy first"
