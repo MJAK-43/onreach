@@ -23,3 +23,17 @@ services:
 
     App\Domain\Health\HealthRepositoryInterface:
         class: App\Infrastructure\Health\InMemoryHealthRepository
+
+    App\Infrastructure\Security\LoginRateLimiter:
+        arguments:
+            $loginLimiter: '@limiter.login'
+            $loginIpLimiter: '@limiter.login_ip'
+
+    App\Infrastructure\ApiPlatform\UserProcessor:
+        bind:
+            $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+
+    App\Application\Auth\Command\LoginCommandHandler:
+        arguments:
+            $refreshTokenTtl: 2592000
+            $rememberMeTtl: 7776000

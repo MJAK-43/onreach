@@ -27,4 +27,5 @@ if [ ! -f config/jwt/private.pem ]; then
 fi
 
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || true
+php bin/console app:seed:rbac --no-interaction || true
 exec "$@"
