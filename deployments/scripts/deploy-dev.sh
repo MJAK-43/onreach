@@ -9,8 +9,9 @@ cd "$APP_DIR"
 
 bash "${APP_DIR}/deployments/scripts/fix-permissions.sh"
 
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --pull
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
 
 bash "${APP_DIR}/deployments/scripts/plesk-proxy-onreach.sh"
 

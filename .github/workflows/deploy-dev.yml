@@ -6,10 +6,13 @@ on:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     environment: development
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: develop
 
       - name: Deploy to DEV server
         uses: appleboy/ssh-action@v1.2.0
@@ -25,8 +28,8 @@ jobs:
               git clone --branch develop https://github.com/MJAK-43/onreach.git "$APP_DIR"
             else
               cd "$APP_DIR"
-              git fetch origin develop
-              git reset --hard origin/develop
+              git checkout develop
+              git pull origin develop
             fi
             if [ ! -f "$APP_DIR/.env.dev" ]; then
               echo "ERROR: .env.dev missing on server — run initial deploy first"
