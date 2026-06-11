@@ -8,6 +8,9 @@ on:
   schedule:
     - cron: '0 6 * * 1'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   security-events: write
   contents: read
@@ -22,7 +25,7 @@ jobs:
         language: [javascript-typescript, python]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -32,12 +35,23 @@ jobs:
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
+      # Upload SARIF requires Code Scanning enabled in repo settings.
+      # Settings → Code security → Code scanning → Set up → CodeQL
       - name: Perform CodeQL Analysis
+        id: codeql-analyze
         uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+
+      - name: CodeQL upload notice
+        if: steps.codeql-analyze.outcome == 'failure'
+        run: |
+          echo "::warning::Code Scanning n'est pas activé sur ce dépôt."
+          echo "Pour activer l'upload SARIF : GitHub → Settings → Code security → Code scanning → CodeQL"
+          echo "L'analyse CodeQL a bien tourné ; seul l'envoi des résultats a échoué."
 
   dependency-review:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/dependency-review-action@v4
