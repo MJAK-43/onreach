@@ -76,7 +76,7 @@
             "@auto-scripts"
         ],
         "test": "php bin/phpunit",
-        "phpstan": "phpstan analyse --no-progress",
+        "phpstan": "phpstan analyse --no-progress --memory-limit=512M",
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "check-composer": "composer validate --strict",

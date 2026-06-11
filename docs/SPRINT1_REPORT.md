@@ -1,43 +1,67 @@
 # Rapport Sprint 1 — Auth & RBAC
 
 **Branche :** `feature/auth-rbac`  
-**Date :** 11 juin 2026
+**Date :** 11 juin 2026  
+**Audit complet :** [AUDIT_SPRINT1.md](./AUDIT_SPRINT1.md)
 
 ## Verdict
 
-**SPRINT 1 NON VALIDÉ** — base fonctionnelle livrée, couverture tests < 85% objectif.
+**SPRINT 1** : base livrée (note 74/100) — voir [AUDIT_SPRINT1.md](./AUDIT_SPRINT1.md)  
+**SPRINT 1.1** : **VALIDÉ** (note 82/100) — voir [SPRINT1.1_REPORT.md](./SPRINT1.1_REPORT.md)
 
-**Note : 72/100**
+Fusion vers `develop` **possible** après validation CI + smoke test DEV.
 
 ## Résumé
 
 | Domaine | Statut | Note |
 |---------|--------|------|
 | Architecture DDD/CQRS | OK | 85 |
-| Sécurité (JWT, MFA, RBAC) | OK | 80 |
+| Sécurité (JWT, MFA, RBAC) | OK partiel | 80 |
 | API Auth | OK | 85 |
-| Frontend Auth/Admin | OK | 75 |
-| Base de données | OK | 80 |
-| Tests | Partiel | 55 |
-| Déploiement DEV | À valider CI | 60 |
+| API RBAC (Api Platform) | OK | 82 |
+| Frontend Auth | OK | 78 |
+| Frontend Admin | Lecture seule | 65 |
+| Base de données | OK | 85 |
+| Tests | Insuffisant | 52 |
+| Déploiement DEV | À valider | 65 |
 
-## Tests
+## Tests (exécution locale 11/06/2026)
 
-- Backend : 11 tests PHPUnit — **100% succès**
-- Frontend : 6 tests Vitest — **100% succès**
+- Backend : 11 tests PHPUnit — **100 % succès**
+- Frontend : 6 tests Vitest — **100 % succès**
 - PHPStan niveau 6 — **0 erreur**
-- ESLint + TypeScript — **OK**
-- Couverture estimée : ~45% (objectif 85% non atteint)
+- ESLint + TypeScript + build — **OK**
+- Couverture estimée : **~45 %** (objectif 85 % non atteint)
 
-## Corrections restantes
+## Corrections récentes (post-audit initial)
 
-1. Augmenter couverture tests (MFA, permissions, API CRUD)
-2. Valider déploiement DEV post-merge
-3. Envoi email réel forgot-password (Mailer configuré, transport à brancher)
-4. Event subscribers audit automatique sur PATCH entités
+1. `symfony/expression-language` — requis pour attributs `security:` Api Platform
+2. `#[Ignore]` sur `User::getRoles()` — fix sérialisation `/api/users`
+3. Pages admin Utilisateurs / Rôles / Permissions — **OK en local Docker**
 
-## Endpoints DEV à vérifier post-déploiement
+## Bloquants avant merge `develop`
 
-- https://dev.onreach.inovixora.fr
-- https://api.onreach.inovixora.fr/health
-- https://api.onreach.inovixora.fr/api/auth/login
+1. Couverture tests ≥ 85 % (MFA, RBAC, CRUD API, guards frontend)
+2. Brancher `AuditTrailService` sur mutations entités
+3. Envoi email réel forgot-password (`symfony/mailer`)
+4. Valider CI GitHub (pipelines verts)
+5. Smoke test déploiement DEV post-merge
+
+## Backlog Sprint 1.1
+
+- CRUD admin frontend (users, rôles, permissions)
+- Garde-fous rôles `isSystem`
+- Page logs sécurité (`system.logs`)
+- Logs `ROLE_UPDATED` / `PERMISSION_UPDATED`
+
+## Compte seed
+
+`admin@onreach.inovixora.fr` / `Admin@OnReach12!`
+
+## Test local Docker
+
+```powershell
+docker compose up -d --build
+# Frontend : http://localhost:5173/login
+# API      : http://localhost:8081/health
+```

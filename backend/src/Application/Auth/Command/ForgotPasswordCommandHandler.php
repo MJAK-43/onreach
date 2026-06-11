@@ -7,6 +7,7 @@ namespace App\Application\Auth\Command;
 use App\Domain\Security\SecurityEventType;
 use App\Entity\PasswordResetToken;
 use App\Entity\User;
+use App\Infrastructure\Mail\PasswordResetMailer;
 use App\Infrastructure\Security\SecurityLogService;
 use App\Repository\PasswordResetTokenRepository;
 use App\Repository\UserRepository;
@@ -17,6 +18,7 @@ final readonly class ForgotPasswordCommandHandler
         private UserRepository $userRepository,
         private PasswordResetTokenRepository $tokenRepository,
         private SecurityLogService $securityLogService,
+        private PasswordResetMailer $passwordResetMailer,
     ) {
     }
 
@@ -43,6 +45,7 @@ final readonly class ForgotPasswordCommandHandler
         );
         $this->tokenRepository->save($token);
         $this->securityLogService->log(SecurityEventType::PASSWORD_RESET_REQUESTED, $user);
+        $this->passwordResetMailer->send($user, $plainToken);
 
         if ('test' === ($_ENV['APP_ENV'] ?? '')) {
             $response['resetToken'] = $plainToken;

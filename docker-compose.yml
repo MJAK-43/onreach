@@ -99,6 +99,9 @@ services:
       MESSENGER_TRANSPORT_DSN: redis://redis:6379/messages
       JWT_PASSPHRASE: ${JWT_PASSPHRASE:?JWT_PASSPHRASE required}
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN}
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      MAILER_FROM: ${MAILER_FROM:-noreply@onreach.inovixora.fr}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     volumes:
       - ./backend:/var/www/html

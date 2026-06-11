@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
+use App\Infrastructure\ApiPlatform\RoleProcessor;
 use App\Repository\RoleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -26,6 +27,7 @@ use Symfony\Component\Uid\Uuid;
     ],
     normalizationContext: ['groups' => ['role:read']],
     denormalizationContext: ['groups' => ['role:write']],
+    processor: RoleProcessor::class,
 )]
 class Role
 {
