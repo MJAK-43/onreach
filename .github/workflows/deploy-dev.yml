@@ -22,7 +22,8 @@ jobs:
 
       - name: Build deployment archive
         run: |
-          tar -czf onreach-deploy.tar.gz \
+          ARCHIVE="${RUNNER_TEMP}/onreach-deploy.tar.gz"
+          tar -czf "$ARCHIVE" \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=backend/vendor \
@@ -34,20 +35,22 @@ jobs:
             --exclude=backend/.env.dev \
             --exclude=backend/.env.test \
             -C "${{ github.workspace }}" .
-          ls -lh onreach-deploy.tar.gz
+          ls -lh "$ARCHIVE"
+          echo "DEPLOY_ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
 
       - name: Upload archive to DEV server
         env:
           SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
           SSH_USER: ${{ secrets.DEV_SSH_USER }}
           SSH_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          DEPLOY_ARCHIVE: ${{ env.DEPLOY_ARCHIVE }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
           scp -i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new \
-            onreach-deploy.tar.gz "${SSH_USER}@${SSH_HOST}:/tmp/onreach-deploy.tar.gz"
+            "$DEPLOY_ARCHIVE" "${SSH_USER}@${SSH_HOST}:/tmp/onreach-deploy.tar.gz"
           ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new \
             "${SSH_USER}@${SSH_HOST}" "test -f /tmp/onreach-deploy.tar.gz && ls -lh /tmp/onreach-deploy.tar.gz"
 
