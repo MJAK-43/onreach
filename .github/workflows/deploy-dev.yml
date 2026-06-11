@@ -22,8 +22,7 @@ jobs:
 
       - name: Build deployment archive
         run: |
-          ARCHIVE="${{ github.workspace }}/onreach-deploy.tar.gz"
-          tar -czf "$ARCHIVE" \
+          tar -czf onreach-deploy.tar.gz \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=backend/vendor \
@@ -35,18 +34,22 @@ jobs:
             --exclude=backend/.env.dev \
             --exclude=backend/.env.test \
             -C "${{ github.workspace }}" .
-          ls -lh "$ARCHIVE"
+          ls -lh onreach-deploy.tar.gz
 
-      - name: Upload to DEV server
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USER }}
-          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          source: onreach-deploy.tar.gz
-          target: /tmp
-          overwrite: true
-          strip_components: 0
+      - name: Upload archive to DEV server
+        env:
+          SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
+          SSH_USER: ${{ secrets.DEV_SSH_USER }}
+          SSH_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          scp -i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new \
+            onreach-deploy.tar.gz "${SSH_USER}@${SSH_HOST}:/tmp/onreach-deploy.tar.gz"
+          ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new \
+            "${SSH_USER}@${SSH_HOST}" "test -f /tmp/onreach-deploy.tar.gz && ls -lh /tmp/onreach-deploy.tar.gz"
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.2
@@ -65,12 +68,13 @@ jobs:
             fi
             if [ -z "$ARCHIVE" ] || [ ! -f "$ARCHIVE" ]; then
               echo "ERROR: deployment archive not found under /tmp"
+              find /tmp -maxdepth 3 -type f 2>/dev/null | head -20 || true
               ls -la /tmp
               exit 1
             fi
             echo "Using archive: $ARCHIVE"
             tar -xzf "$ARCHIVE" -C "$APP_DIR"
-            rm -f "$ARCHIVE" /tmp/onreach-deploy.tar.gz
+            rm -f "$ARCHIVE"
             chmod +x "$APP_DIR"/deployments/scripts/*.sh "$APP_DIR"/backend/docker/entrypoint.sh 2>/dev/null || true
             if [ ! -f "$APP_DIR/.env.dev" ]; then
               echo "ERROR: .env.dev missing on server — run initial deploy first"
@@ -84,9 +88,10 @@ jobs:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          command_timeout: 10m
           script: |
             set -e
-            for i in $(seq 1 20); do
+            for i in $(seq 1 30); do
               API=$(curl -sf -o /dev/null -w "%{http_code}" https://api.onreach.inovixora.fr/health || echo "000")
               AI=$(curl -sf -o /dev/null -w "%{http_code}" https://ai.onreach.inovixora.fr/health || echo "000")
               DEV=$(curl -sf -o /dev/null -w "%{http_code}" https://dev.onreach.inovixora.fr/ || echo "000")
@@ -97,7 +102,7 @@ jobs:
                 curl -sf https://ai.onreach.inovixora.fr/health
                 exit 0
               fi
-              sleep 5
+              sleep 10
             done
             echo "Health check failed after retries"
             exit 1

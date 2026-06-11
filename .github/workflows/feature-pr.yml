@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -64,12 +66,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          git fetch origin develop
+          AHEAD=$(git rev-list --count origin/develop..HEAD || echo "0")
+          if [ "$AHEAD" = "0" ]; then
+            echo "Branch already up to date with develop — skip PR creation"
+            exit 0
+          fi
           if gh pr list --head "${{ github.ref_name }}" --base develop --state open --json number --jq length | grep -q '^0$'; then
             gh pr create \
               --base develop \
               --head "${{ github.ref_name }}" \
               --title "feat: ${{ github.ref_name }}" \
-              --body "## Résumé
+              --body-file - <<EOF
+          ## Résumé
           PR automatique depuis \`${{ github.ref_name }}\` vers \`develop\`.
 
           ## Checks exécutés
@@ -79,5 +88,8 @@ jobs:
           - [x] ESLint
           - [x] TypeScript
           - [x] Vitest
-          - [x] Build frontend"
+          - [x] Build frontend
+          EOF
+          else
+            echo "Open PR already exists for ${GITHUB_REF_NAME}"
           fi
