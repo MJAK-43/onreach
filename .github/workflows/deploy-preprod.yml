@@ -1,0 +1,27 @@
+name: Deploy PREPROD
+
+on:
+  push:
+    branches: [preprod]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: preproduction
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to PREPROD
+        run: |
+          echo "Déploiement PREPROD — configurer selon l'infrastructure cible"
+
+      - name: Create PR to main
+        if: success()
+        uses: peter-evans/create-pull-request@v7
+        with:
+          base: main
+          branch: preprod-to-main-${{ github.run_id }}
+          title: "release: promote preprod to main"
+          body: |
+            ## Promotion preprod → main
+            Déploiement PREPROD validé. Revue manuelle requise avant merge.

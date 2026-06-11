@@ -1,0 +1,24 @@
+name: Deploy PROD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run full test suite
+        run: |
+          cd backend && composer install && php bin/phpunit
+          cd ../frontend && npm ci && npm run test && npm run build
+        env:
+          APP_ENV: test
+          APP_SECRET: test
+
+      - name: Deploy to PROD
+        run: |
+          echo "Déploiement PRODUCTION — jamais de merge automatique vers main"

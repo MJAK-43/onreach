@@ -1,0 +1,36 @@
+name: AI Service CI
+
+on:
+  push:
+    branches: [main, preprod, develop, 'feature/**']
+    paths:
+      - 'ai-service/**'
+      - '.github/workflows/ai-service.yml'
+  pull_request:
+    branches: [main, preprod, develop]
+    paths:
+      - 'ai-service/**'
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Pytest
+        run: pytest -v

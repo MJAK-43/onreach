@@ -1,52 +1,42 @@
-# Cache and logs (Symfony2)
-/app/cache/*
-/app/logs/*
-!app/cache/.gitkeep
-!app/logs/.gitkeep
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+backend/.env.local
+backend/.env.*.local
 
-# Email spool folder
-/app/spool/*
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
 
-# Cache, session files and logs (Symfony3)
-/var/cache/*
-/var/logs/*
-/var/sessions/*
-!var/cache/.gitkeep
-!var/logs/.gitkeep
-!var/sessions/.gitkeep
+# Backend (Symfony)
+/backend/vendor/
+/backend/var/
+/backend/.phpunit.cache/
+/backend/config/jwt/*.pem
+/backend/public/bundles/
 
-# Logs (Symfony4)
-/var/log/*
-!var/log/.gitkeep
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
 
-# Parameters
-/app/config/parameters.yml
-/app/config/parameters.ini
+# AI Service
+/ai-service/__pycache__/
+/ai-service/.pytest_cache/
+/ai-service/.venv/
+/ai-service/venv/
+*.pyc
 
-# Managed by Composer
-/app/bootstrap.php.cache
-/var/bootstrap.php.cache
-/bin/*
-!bin/console
-!bin/symfony_requirements
-/vendor/
+# Docker volumes
+/backups/
 
-# Assets and user uploads
-/web/bundles/
-/web/uploads/
+# Logs
+*.log
 
-# PHPUnit
-/app/phpunit.xml
-/phpunit.xml
-
-# Build data
-/build/
-
-# Composer PHAR
-/composer.phar
-
-# Backup entities generated with doctrine:generate:entities command
-**/Entity/*~
-
-# Embedded web-server pid file
-/.web-server-pid
+# OS
+Thumbs.db

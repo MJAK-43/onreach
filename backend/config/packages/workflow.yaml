@@ -1,0 +1,19 @@
+framework:
+    workflows:
+        enabled: true
+        # workflows:
+        #     example:
+        #         type: state_machine
+        #         marking_store:
+        #             type: method
+        #             property: status
+        #         supports:
+        #             - App\Domain\Example\ExampleEntity
+        #         initial_marking: draft
+        #         places:
+        #             - draft
+        #             - published
+        #         transitions:
+        #             publish:
+        #                 from: draft
+        #                 to: published

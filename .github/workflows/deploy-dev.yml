@@ -1,0 +1,46 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to DEV server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            APP_DIR="/opt/onreach/app"
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$APP_DIR"
+              git clone --branch develop https://github.com/MJAK-43/onreach.git "$APP_DIR"
+            else
+              cd "$APP_DIR"
+              git fetch origin develop
+              git reset --hard origin/develop
+            fi
+            if [ ! -f "$APP_DIR/.env.dev" ]; then
+              echo "ERROR: .env.dev missing on server — run initial deploy first"
+              exit 1
+            fi
+            bash "$APP_DIR/deployments/scripts/deploy-dev.sh"
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          script: |
+            curl -sf https://api.onreach.inovixora.fr/health
+            curl -sf https://ai.onreach.inovixora.fr/health
+            curl -sf -o /dev/null -w "%{http_code}" https://dev.onreach.inovixora.fr | grep -q 200
