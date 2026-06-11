@@ -1,8 +1,15 @@
 #!/bin/sh
 set -e
 
+needs_composer_install=false
 if [ ! -f vendor/autoload.php ]; then
-    composer install --no-interaction --ignore-platform-reqs
+    needs_composer_install=true
+elif [ ! -f vendor/composer/installed.json ] || [ composer.lock -nt vendor/composer/installed.json ]; then
+    needs_composer_install=true
+fi
+
+if [ "$needs_composer_install" = true ]; then
+    composer install --no-interaction --ignore-platform-reqs --optimize-autoloader
 fi
 
 if [ ! -f .env ]; then
