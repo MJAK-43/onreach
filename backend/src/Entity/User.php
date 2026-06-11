@@ -18,6 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -143,6 +144,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /** @return list<string> */
+    #[Ignore]
     public function getRoles(): array
     {
         $codes = $this->roles->map(fn (Role $role) => 'ROLE_'.$role->getCode())->toArray();
