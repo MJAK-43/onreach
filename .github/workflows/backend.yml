@@ -80,7 +80,7 @@ jobs:
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
 
       - name: PHPStan
-        run: vendor/bin/phpstan analyse --no-progress
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 
       - name: PHPUnit
         run: php bin/phpunit
@@ -93,6 +93,9 @@ jobs:
           JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
           JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
           DEFAULT_URI: http://localhost
+          MAILER_DSN: "null://null"
+          MAILER_FROM: noreply@onreach.test
+          FRONTEND_URL: http://localhost:5173
 
       - name: Composer audit
         run: composer audit

@@ -92,13 +92,16 @@ services:
       context: ./backend
       target: dev
     environment:
-      APP_ENV: ${APP_ENV:-dev}
+      APP_ENV: dev
       APP_SECRET: ${APP_SECRET:?APP_SECRET required}
       DATABASE_URL: postgresql://${POSTGRES_USER:-onreach}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-onreach}?serverVersion=16&charset=utf8
       REDIS_URL: redis://redis:6379
       MESSENGER_TRANSPORT_DSN: redis://redis:6379/messages
       JWT_PASSPHRASE: ${JWT_PASSPHRASE:?JWT_PASSPHRASE required}
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN}
+      MAILER_DSN: ${MAILER_DSN:-null://null}
+      MAILER_FROM: ${MAILER_FROM:-noreply@onreach.inovixora.fr}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     volumes:
       - ./backend:/var/www/html
@@ -165,7 +168,7 @@ services:
       retries: 5
       start_period: 30s
     environment:
-      APP_ENV: ${APP_ENV:-dev}
+      APP_ENV: dev
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     volumes:
