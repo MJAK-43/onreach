@@ -4,6 +4,9 @@ on:
   push:
     branches: [develop]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     if: github.ref == 'refs/heads/develop'
@@ -12,60 +15,74 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: develop
 
       - name: Deploy to DEV server
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             APP_DIR="/opt/onreach/app"
-            REPO_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/MJAK-43/onreach.git"
+            REPO_URL="https://github.com/MJAK-43/onreach.git"
+            AUTH="Authorization: bearer ${{ secrets.GITHUB_TOKEN }}"
+
+            git_fetch() {
+              git -c http.extraHeader="$AUTH" fetch "$REPO_URL" develop
+            }
+
             if [ ! -d "$APP_DIR/.git" ]; then
               mkdir -p "$APP_DIR"
               if [ -n "$(ls -A "$APP_DIR" 2>/dev/null)" ]; then
                 cd "$APP_DIR"
                 git init
                 git remote add origin "$REPO_URL"
-                git fetch origin develop
-                git checkout -f develop
-                git branch --set-upstream-to=origin/develop develop
+                git_fetch
+                git checkout -f -B develop FETCH_HEAD
               else
-                git clone --branch develop "$REPO_URL" "$APP_DIR"
+                git -c http.extraHeader="$AUTH" clone --branch develop "$REPO_URL" "$APP_DIR"
               fi
             else
               cd "$APP_DIR"
               git remote set-url origin "$REPO_URL"
-              git checkout develop
-              git pull origin develop
+              git_fetch
+              git checkout -f develop
+              git reset --hard FETCH_HEAD
+              git clean -fd -e .env.dev
             fi
+
             if [ ! -f "$APP_DIR/.env.dev" ]; then
               echo "ERROR: .env.dev missing on server — run initial deploy first"
               exit 1
             fi
+
             bash "$APP_DIR/deployments/scripts/deploy-dev.sh"
 
       - name: Health check
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           script: |
-            for i in $(seq 1 15); do
-              if curl -sf https://api.onreach.inovixora.fr/health >/dev/null \
-                && curl -sf https://ai.onreach.inovixora.fr/health >/dev/null \
-                && curl -sf -o /dev/null -w "%{http_code}" https://dev.onreach.inovixora.fr | grep -q 200; then
+            set -e
+            for i in $(seq 1 20); do
+              API=$(curl -sf -o /dev/null -w "%{http_code}" https://api.onreach.inovixora.fr/health || echo "000")
+              AI=$(curl -sf -o /dev/null -w "%{http_code}" https://ai.onreach.inovixora.fr/health || echo "000")
+              DEV=$(curl -sf -o /dev/null -w "%{http_code}" https://dev.onreach.inovixora.fr/ || echo "000")
+              echo "Attempt $i: api=$API ai=$AI dev=$DEV"
+              if [ "$API" = "200" ] && [ "$AI" = "200" ] && [ "$DEV" = "200" ]; then
                 curl -sf https://api.onreach.inovixora.fr/health
+                echo
                 curl -sf https://ai.onreach.inovixora.fr/health
                 exit 0
               fi
-              sleep 4
+              sleep 5
             done
             echo "Health check failed after retries"
             exit 1
