@@ -27,7 +27,7 @@ for domain in "${!PROXY_MAP[@]}"; do
 </IfModule>
 EOF
 
-  if ! grep -q "Include \"${SSL_CONF}\"" "$HTTPD_CONF" 2>/dev/null; then
+  if [ -f "$HTTPD_CONF" ] && ! grep -qF "Include \"${SSL_CONF}\"" "$HTTPD_CONF" 2>/dev/null; then
     sed -i "/#extension sectigo end/a\\\tInclude \"${SSL_CONF}\"" "$HTTPD_CONF"
   fi
 

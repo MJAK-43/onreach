@@ -9,6 +9,8 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     environment: development
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,11 +25,22 @@ jobs:
           script: |
             set -e
             APP_DIR="/opt/onreach/app"
+            REPO_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/MJAK-43/onreach.git"
             if [ ! -d "$APP_DIR/.git" ]; then
               mkdir -p "$APP_DIR"
-              git clone --branch develop https://github.com/MJAK-43/onreach.git "$APP_DIR"
+              if [ -n "$(ls -A "$APP_DIR" 2>/dev/null)" ]; then
+                cd "$APP_DIR"
+                git init
+                git remote add origin "$REPO_URL"
+                git fetch origin develop
+                git checkout -f develop
+                git branch --set-upstream-to=origin/develop develop
+              else
+                git clone --branch develop "$REPO_URL" "$APP_DIR"
+              fi
             else
               cd "$APP_DIR"
+              git remote set-url origin "$REPO_URL"
               git checkout develop
               git pull origin develop
             fi

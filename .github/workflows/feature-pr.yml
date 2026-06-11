@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   quality-and-pr:
+    if: startsWith(github.ref, 'refs/heads/feature/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +38,7 @@ jobs:
           JWT_PASSPHRASE: test
           JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
           JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+          DEFAULT_URI: http://localhost
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

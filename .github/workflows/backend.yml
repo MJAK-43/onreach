@@ -88,6 +88,7 @@ jobs:
           JWT_PASSPHRASE: test
           JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
           JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
+          DEFAULT_URI: http://localhost
 
       - name: Composer audit
         run: composer audit
