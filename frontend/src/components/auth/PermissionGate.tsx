@@ -14,7 +14,7 @@ export function PermissionGate({
 }: PermissionGateProps) {
   const { data: user } = useCurrentUser()
 
-  if (!hasPermission(user?.permissions, permission)) {
+  if (!hasPermission(user?.permissions, permission, user?.roles)) {
     return fallback
   }
 

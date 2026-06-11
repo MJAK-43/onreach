@@ -43,6 +43,10 @@ services:
         bind:
             $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
 
+    App\Infrastructure\ApiPlatform\CandidateProcessor:
+        bind:
+            $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+
     App\Infrastructure\Mail\PasswordResetMailer:
         arguments:
             $frontendUrl: '%app.frontend_url%'

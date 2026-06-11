@@ -28,7 +28,11 @@ export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (permission && !user.permissions.includes(permission)) {
+  if (
+    permission
+    && !user.permissions.includes(permission)
+    && !user.roles.includes('SUPER_ADMIN')
+  ) {
     return <Navigate to="/unauthorized" replace />
   }
 

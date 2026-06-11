@@ -26,3 +26,15 @@ Tous les pipelines **échouent** en cas d'erreur. Aucune désactivation autoris�
 1. `feature/*` → `develop` (après tests OK)
 2. `develop` → `preprod` (après deploy DEV)
 3. `preprod` → `main` (après deploy PREPROD, merge manuel requis)
+
+## Sprint 2 — Branche
+
+`feature/sprint-2-candidate` : module Dossier Étudiant Unifié.
+
+Tests requis avant merge :
+
+```bash
+cd backend && php bin/phpunit && vendor/bin/phpstan analyse
+cd frontend && npm run lint && npm run typecheck && npm test -- --run
+docker compose up -d && docker compose exec backend php bin/console doctrine:migrations:migrate
+```

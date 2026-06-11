@@ -4,10 +4,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, ChevronDown, LogOut, Shield, User } from 'lucide-react'
 import { logout } from '@/lib/api'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { getPrimaryRole, getRoleLabel } from '@/lib/roles'
 import { Button } from '@/components/ui/button'
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
-  '/': { title: 'Tableau de bord', subtitle: 'Vue d\'ensemble de la plateforme' },
+  '/': { title: 'Tableau de bord', subtitle: 'Vue d\'ensemble' },
+  '/my-file': { title: 'Mon dossier', subtitle: 'Votre dossier étudiant unifié' },
+  '/candidates': { title: 'Candidats', subtitle: 'Gestion des dossiers étudiants' },
+  '/candidates/new': { title: 'Nouveau candidat', subtitle: 'Création d\'un dossier' },
   '/settings': { title: 'Paramètres', subtitle: 'Configuration de l\'application' },
   '/profile': { title: 'Mon profil', subtitle: 'Informations du compte' },
   '/admin/users': { title: 'Utilisateurs', subtitle: 'Gestion des comptes' },
@@ -24,10 +28,12 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const pageInfo = pageTitles[location.pathname] ?? {
-    title: 'On\'Reach',
-    subtitle: 'Plateforme d\'accompagnement',
-  }
+  const role = getPrimaryRole(user?.roles)
+  const pageInfo = pageTitles[location.pathname] ?? (
+    location.pathname.startsWith('/candidates/')
+      ? { title: 'Fiche candidat', subtitle: 'Dossier étudiant unifié' }
+      : { title: 'On\'Reach', subtitle: getRoleLabel(role) }
+  )
 
   const logoutMutation = useMutation({
     mutationFn: logout,
@@ -87,6 +93,7 @@ export function Header() {
               <div className="border-b border-border px-4 py-2">
                 <p className="text-sm font-medium">{user?.fullName}</p>
                 <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-primary">{getRoleLabel(role)}</p>
               </div>
               <button
                 type="button"

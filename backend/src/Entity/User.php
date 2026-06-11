@@ -44,18 +44,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Uuid $id;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'candidate:read'])]
     private string $email;
 
     #[ORM\Column]
     private string $password;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'candidate:read'])]
     private string $firstName;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read', 'user:write', 'candidate:read'])]
     private string $lastName;
 
     #[ORM\Column]

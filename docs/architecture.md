@@ -50,3 +50,23 @@ On'Reach est une plateforme SaaS modulaire pour l'accompagnement des étudiants 
 - Adapter Pattern pour les intégrations (OpenAI, Brevo, WhatsApp)
 - Event Driven via Symfony Messenger
 - Workflow Symfony pour les processus d'admission
+
+## Sprint 2 — Module Candidate
+
+### Agrégat principal
+
+`Candidate` (Doctrine + API Platform) avec sous-ressources via controllers dédiés :
+
+- `CandidateProvider` / `CandidateProcessor` — filtrage RBAC, génération référence, timeline
+- `CandidateSubresourceController` — timeline, documents, applications, complétude, notes
+- `CandidateDocumentController` — upload et validation
+- `ChecklistService` — calcul de complétude par procédure
+- `DocumentStorageService` — stockage fichiers (local / MinIO)
+
+### Permissions ajoutées
+
+`candidates.*`, `documents.*`, `applications.*` — voir `docs/candidate.md` et `docs/rbac.md`.
+
+### Frontend Sprint 2
+
+Pages React : liste, création, fiche candidat avec tableau de complétude et onglets.

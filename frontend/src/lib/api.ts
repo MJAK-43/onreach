@@ -275,3 +275,145 @@ export async function fetchPermissions(): Promise<PermissionListItem[]> {
   const data = await apiRequest<Record<string, unknown>>('/api/permissions')
   return extractCollection<PermissionListItem>(data)
 }
+
+export interface CounselorSummary {
+  id?: string
+  firstName?: string
+  lastName?: string
+  email?: string
+}
+
+export interface CandidateListItem {
+  id: string
+  referenceNumber: string
+  firstName: string
+  lastName: string
+  email: string
+  nationality: string
+  status: string
+  phone?: string | null
+  city?: string | null
+  country?: string | null
+  completionPercent?: number
+  assignedCounselor?: CounselorSummary | string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CandidateCompletion {
+  global: number
+  profile: number
+  documents: number
+  financing: number
+  campusFrance: number
+  checklist: {
+    items: Array<{
+      id: string
+      label: string
+      documentType: string
+      required: boolean
+      completed: boolean
+    }>
+    percent: number
+  }
+}
+
+export interface CandidateDocumentItem {
+  id: string
+  type: string
+  status: string
+  originalFilename?: string | null
+  mimeType?: string | null
+  size?: number | null
+  uploadedAt?: string | null
+  validatedAt?: string | null
+}
+
+export interface CandidateTimelineItem {
+  id: string
+  action: string
+  description: string
+  metadata?: Record<string, unknown> | null
+  occurredAt: string
+  actor?: string | null
+}
+
+export interface CandidateNoteItem {
+  id: string
+  title: string
+  content: string
+  author: string
+  createdAt: string
+}
+
+export interface CreateCandidatePayload {
+  firstName: string
+  lastName: string
+  email: string
+  nationality: string
+  status?: string
+  phone?: string
+  city?: string
+  country?: string
+}
+
+export async function fetchCandidates(): Promise<CandidateListItem[]> {
+  const data = await apiRequest<Record<string, unknown>>('/api/candidates')
+  return extractCollection<CandidateListItem>(data)
+}
+
+export async function fetchCandidate(id: string): Promise<CandidateListItem> {
+  return apiRequest<CandidateListItem>(`/api/candidates/${id}`)
+}
+
+export async function createCandidate(payload: CreateCandidatePayload): Promise<CandidateListItem> {
+  return apiRequest<CandidateListItem>('/api/candidates', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateCandidate(
+  id: string,
+  payload: Partial<CreateCandidatePayload>,
+): Promise<CandidateListItem> {
+  return apiRequest<CandidateListItem>(`/api/candidates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function fetchCandidateDocuments(id: string): Promise<CandidateDocumentItem[]> {
+  return apiRequest<CandidateDocumentItem[]>(`/api/candidates/${id}/documents`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function fetchCandidateTimeline(id: string): Promise<CandidateTimelineItem[]> {
+  return apiRequest<CandidateTimelineItem[]>(`/api/candidates/${id}/timeline`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function fetchCandidateCompletion(id: string): Promise<CandidateCompletion> {
+  return apiRequest<CandidateCompletion>(`/api/candidates/${id}/completion`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function fetchCandidateNotes(id: string): Promise<CandidateNoteItem[]> {
+  return apiRequest<CandidateNoteItem[]>(`/api/candidates/${id}/notes`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function createCandidateNote(
+  id: string,
+  payload: { title: string; content: string },
+): Promise<{ id: string; title: string }> {
+  return apiRequest(`/api/candidates/${id}/notes`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { Accept: 'application/json' },
+  })
+}

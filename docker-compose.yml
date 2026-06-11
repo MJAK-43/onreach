@@ -98,6 +98,8 @@ services:
       REDIS_URL: redis://redis:6379
       MESSENGER_TRANSPORT_DSN: redis://redis:6379/messages
       JWT_PASSPHRASE: ${JWT_PASSPHRASE:?JWT_PASSPHRASE required}
+      JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
+      JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN}
       MAILER_DSN: ${MAILER_DSN:-null://null}
       MAILER_FROM: ${MAILER_FROM:-noreply@onreach.inovixora.fr}

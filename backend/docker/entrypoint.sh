@@ -18,6 +18,9 @@ CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-}
 MESSENGER_TRANSPORT_DSN=${MESSENGER_TRANSPORT_DSN:-}
 DEFAULT_URI=${DEFAULT_URI:-http://localhost}
 EOF
+else
+    grep -q '^JWT_SECRET_KEY=' .env || echo 'JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem' >> .env
+    grep -q '^JWT_PUBLIC_KEY=' .env || echo 'JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem' >> .env
 fi
 
 if [ ! -f config/jwt/private.pem ]; then
@@ -28,4 +31,6 @@ fi
 
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || true
 php bin/console app:seed:rbac --no-interaction || true
+php bin/console app:seed:checklist --no-interaction || true
+php bin/console app:seed:demo-users --no-interaction || true
 exec "$@"

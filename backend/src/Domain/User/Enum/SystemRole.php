@@ -42,11 +42,37 @@ enum SystemRole: string
                 SystemPermission::PERMISSIONS_VIEW,
                 SystemPermission::PERMISSIONS_EDIT,
                 SystemPermission::SYSTEM_LOGS,
+                SystemPermission::CANDIDATES_VIEW,
+                SystemPermission::CANDIDATES_CREATE,
+                SystemPermission::CANDIDATES_EDIT,
+                SystemPermission::CANDIDATES_DELETE,
+                SystemPermission::CANDIDATES_NOTES,
+                SystemPermission::DOCUMENTS_VIEW,
+                SystemPermission::DOCUMENTS_UPLOAD,
+                SystemPermission::DOCUMENTS_VALIDATE,
+                SystemPermission::APPLICATIONS_VIEW,
+                SystemPermission::APPLICATIONS_EDIT,
             ],
-            self::COUNSELOR, self::ACCOUNTANT, self::HOUSING_MANAGER => [
+            self::COUNSELOR => [
+                SystemPermission::CANDIDATES_VIEW,
+                SystemPermission::CANDIDATES_CREATE,
+                SystemPermission::CANDIDATES_EDIT,
+                SystemPermission::CANDIDATES_NOTES,
+                SystemPermission::DOCUMENTS_VIEW,
+                SystemPermission::DOCUMENTS_UPLOAD,
+                SystemPermission::DOCUMENTS_VALIDATE,
+                SystemPermission::APPLICATIONS_VIEW,
+                SystemPermission::APPLICATIONS_EDIT,
+            ],
+            self::ACCOUNTANT, self::HOUSING_MANAGER => [
                 SystemPermission::USERS_VIEW,
             ],
-            self::CANDIDATE => [],
+            self::CANDIDATE => [
+                SystemPermission::CANDIDATES_VIEW,
+                SystemPermission::DOCUMENTS_VIEW,
+                SystemPermission::DOCUMENTS_UPLOAD,
+                SystemPermission::APPLICATIONS_VIEW,
+            ],
         };
     }
 }

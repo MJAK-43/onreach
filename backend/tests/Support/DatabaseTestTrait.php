@@ -25,4 +25,12 @@ trait DatabaseTestTrait
             new \Symfony\Component\Console\Output\NullOutput(),
         );
     }
+
+    protected function seedChecklist(): void
+    {
+        static::getContainer()->get(\App\Infrastructure\Command\SeedChecklistCommand::class)->run(
+            new \Symfony\Component\Console\Input\ArrayInput([]),
+            new \Symfony\Component\Console\Output\NullOutput(),
+        );
+    }
 }

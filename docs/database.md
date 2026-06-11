@@ -20,7 +20,29 @@ docker compose exec backend php bin/console doctrine:migrations:migrate
 
 ## Seeders
 
-Script placeholder : `backend/scripts/seed.sh`
+```bash
+php bin/console app:seed:rbac
+php bin/console app:seed:checklist
+```
+
+## Sprint 2 — Tables Candidate
+
+| Table | Description |
+|-------|-------------|
+| `candidates` | Agrégat principal |
+| `academic_profiles`, `academic_records` | Parcours académique |
+| `language_profiles`, `language_certificates` | Langues |
+| `professional_profiles`, `professional_experiences` | Expérience pro |
+| `financing_profiles`, `guarantors` | Financement |
+| `candidate_documents` | Documents |
+| `candidate_notes` | Notes conseiller |
+| `candidate_timeline_entries` | Historique |
+| `campus_france_applications` | Campus France |
+| `parcoursup_applications`, `parcoursup_wishes` | Parcoursup |
+| `paris_saclay_applications` | Paris-Saclay |
+| `checklist_templates`, `checklist_items`, `checklist_progress` | Checklist dynamique |
+
+Migration : `Version20260611170300`
 
 ## Backups
 

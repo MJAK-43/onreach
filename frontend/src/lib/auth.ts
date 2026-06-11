@@ -26,7 +26,12 @@ export function isAuthenticated(): boolean {
 export function hasPermission(
   permissions: string[] | undefined,
   permission: string,
+  roles?: string[],
 ): boolean {
+  if (roles?.includes('SUPER_ADMIN')) {
+    return true
+  }
+
   return permissions?.includes(permission) ?? false
 }
 
