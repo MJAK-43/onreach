@@ -22,7 +22,8 @@ jobs:
 
       - name: Build deployment archive
         run: |
-          tar -czf onreach-deploy.tar.gz \
+          ARCHIVE="${RUNNER_TEMP}/onreach-deploy.tar.gz"
+          tar -czf "$ARCHIVE" \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=backend/vendor \
@@ -34,7 +35,8 @@ jobs:
             --exclude=backend/.env.dev \
             --exclude=backend/.env.test \
             -C "${{ github.workspace }}" .
-          ls -lh onreach-deploy.tar.gz
+          ls -lh "$ARCHIVE"
+          echo "DEPLOY_ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
 
       - name: Upload to DEV server
         uses: appleboy/scp-action@v1
@@ -42,7 +44,7 @@ jobs:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          source: onreach-deploy.tar.gz
+          source: ${{ env.DEPLOY_ARCHIVE }}
           target: /tmp
           overwrite: true
 
