@@ -36,6 +36,6 @@ final class PasswordPolicy
 
     public static function isValid(string $password): bool
     {
-        return self::validate($password) === [];
+        return [] === self::validate($password);
     }
 }

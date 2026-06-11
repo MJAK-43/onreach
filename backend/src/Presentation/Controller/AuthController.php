@@ -16,8 +16,6 @@ use App\Application\Auth\Command\MfaSetupCommandHandler;
 use App\Application\Auth\Command\ResetPasswordCommand;
 use App\Application\Auth\Command\ResetPasswordCommandHandler;
 use App\Application\Auth\DTO\LoginRequest;
-use App\Application\Auth\Query\GetCurrentUserQuery;
-use App\Application\Auth\Query\GetCurrentUserQueryHandler;
 use App\Domain\Security\SecurityEventType;
 use App\Entity\User;
 use App\Infrastructure\Security\SecurityLogService;

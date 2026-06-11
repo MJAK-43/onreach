@@ -13,6 +13,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
  * @extends ServiceEntityRepository<User>
+ *
  * @implements UserProviderInterface<User>
  */
 final class UserRepository extends ServiceEntityRepository implements UserProviderInterface

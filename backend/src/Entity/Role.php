@@ -56,7 +56,6 @@ class Role
     #[Groups(['role:read', 'role:write'])]
     private Collection $permissions;
 
-
     public function __construct(string $code, string $name, bool $isSystem = false)
     {
         $this->id = Uuid::v7();

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Application\Auth\Query;
 
 use App\Entity\User;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 final readonly class GetCurrentUserQueryHandler
 {
