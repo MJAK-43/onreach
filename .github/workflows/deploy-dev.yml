@@ -19,7 +19,31 @@ jobs:
         with:
           ref: develop
 
-      - name: Deploy to DEV server
+      - name: Build deployment archive
+        run: |
+          tar -czf /tmp/onreach-deploy.tar.gz \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude=backend/vendor \
+            --exclude=backend/var \
+            --exclude=frontend/dist \
+            --exclude=frontend/node_modules \
+            --exclude=.env \
+            --exclude=backend/.env \
+            --exclude=backend/.env.dev \
+            --exclude=backend/.env.test \
+            -C "${{ github.workspace }}" .
+
+      - name: Upload to DEV server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          source: /tmp/onreach-deploy.tar.gz
+          target: /tmp
+
+      - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DEV_SSH_HOST }}
@@ -29,38 +53,14 @@ jobs:
           script: |
             set -e
             APP_DIR="/opt/onreach/app"
-            REPO_URL="https://github.com/MJAK-43/onreach.git"
-            AUTH="Authorization: bearer ${{ secrets.GITHUB_TOKEN }}"
-
-            git_fetch() {
-              git -c http.extraHeader="$AUTH" fetch "$REPO_URL" develop
-            }
-
-            if [ ! -d "$APP_DIR/.git" ]; then
-              mkdir -p "$APP_DIR"
-              if [ -n "$(ls -A "$APP_DIR" 2>/dev/null)" ]; then
-                cd "$APP_DIR"
-                git init
-                git remote add origin "$REPO_URL"
-                git_fetch
-                git checkout -f -B develop FETCH_HEAD
-              else
-                git -c http.extraHeader="$AUTH" clone --branch develop "$REPO_URL" "$APP_DIR"
-              fi
-            else
-              cd "$APP_DIR"
-              git remote set-url origin "$REPO_URL"
-              git_fetch
-              git checkout -f develop
-              git reset --hard FETCH_HEAD
-              git clean -fd -e .env.dev
-            fi
-
+            mkdir -p "$APP_DIR"
+            tar -xzf /tmp/onreach-deploy.tar.gz -C "$APP_DIR"
+            rm -f /tmp/onreach-deploy.tar.gz
+            chmod +x "$APP_DIR"/deployments/scripts/*.sh "$APP_DIR"/backend/docker/entrypoint.sh 2>/dev/null || true
             if [ ! -f "$APP_DIR/.env.dev" ]; then
               echo "ERROR: .env.dev missing on server — run initial deploy first"
               exit 1
             fi
-
             bash "$APP_DIR/deployments/scripts/deploy-dev.sh"
 
       - name: Health check
