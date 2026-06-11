@@ -60,26 +60,24 @@ jobs:
           npm run test
           npm run build
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          branch: ${{ github.ref_name }}
-          base: develop
-          title: "feat: ${{ github.ref_name }}"
-          body: |
-            ## Résumé
-            PR automatique depuis `${{ github.ref_name }}` vers `develop`.
+      - name: Ensure Pull Request exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh pr list --head "${{ github.ref_name }}" --base develop --state open --json number --jq length | grep -q '^0$'; then
+            gh pr create \
+              --base develop \
+              --head "${{ github.ref_name }}" \
+              --title "feat: ${{ github.ref_name }}" \
+              --body "## Résumé
+          PR automatique depuis \`${{ github.ref_name }}\` vers \`develop\`.
 
-            ## Checks exécutés
-            - [x] PHPUnit
-            - [x] PHPStan
-            - [x] PHP CS Fixer
-            - [x] ESLint
-            - [x] TypeScript
-            - [x] Vitest
-            - [x] Build frontend
-
-            ## Test plan
-            - [ ] Vérifier le démarrage Docker
-            - [ ] Vérifier `/health` backend
-            - [ ] Vérifier le dashboard frontend
+          ## Checks exécutés
+          - [x] PHPUnit
+          - [x] PHPStan
+          - [x] PHP CS Fixer
+          - [x] ESLint
+          - [x] TypeScript
+          - [x] Vitest
+          - [x] Build frontend"
+          fi
