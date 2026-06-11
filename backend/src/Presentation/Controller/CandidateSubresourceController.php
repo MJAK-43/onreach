@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
+use ApiPlatform\Metadata\Get;
+use App\Domain\Candidate\Enum\ApplicationType;
 use App\Entity\Candidate;
 use App\Entity\CandidateNote;
 use App\Entity\User;
 use App\Infrastructure\ApiPlatform\CandidateProvider;
 use App\Infrastructure\Candidate\CandidateTimelineService;
 use App\Infrastructure\Candidate\ChecklistService;
-use App\Domain\Candidate\Enum\ApplicationType;
 use App\Repository\CandidateNoteRepository;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use ApiPlatform\Metadata\Get;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 

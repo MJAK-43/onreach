@@ -19,7 +19,7 @@ describe('Sidebar', () => {
     )
 
     expect(screen.getByText("On'Reach")).toBeInTheDocument()
-    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Tableau de bord')).toBeInTheDocument()
     expect(screen.getByText('Paramètres')).toBeInTheDocument()
   })
 })

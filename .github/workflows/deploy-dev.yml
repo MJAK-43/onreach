@@ -22,7 +22,7 @@ jobs:
 
       - name: Build deployment archive
         run: |
-          ARCHIVE="${RUNNER_TEMP}/onreach-deploy.tar.gz"
+          ARCHIVE="${{ github.workspace }}/onreach-deploy.tar.gz"
           tar -czf "$ARCHIVE" \
             --exclude=.git \
             --exclude=node_modules \
@@ -36,7 +36,6 @@ jobs:
             --exclude=backend/.env.test \
             -C "${{ github.workspace }}" .
           ls -lh "$ARCHIVE"
-          echo "DEPLOY_ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
 
       - name: Upload to DEV server
         uses: appleboy/scp-action@v1
@@ -44,9 +43,10 @@ jobs:
           host: ${{ secrets.DEV_SSH_HOST }}
           username: ${{ secrets.DEV_SSH_USER }}
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          source: ${{ env.DEPLOY_ARCHIVE }}
+          source: onreach-deploy.tar.gz
           target: /tmp
           overwrite: true
+          strip_components: 0
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.2
@@ -61,7 +61,7 @@ jobs:
             mkdir -p "$APP_DIR"
             ARCHIVE="/tmp/onreach-deploy.tar.gz"
             if [ ! -f "$ARCHIVE" ]; then
-              ARCHIVE="$(find /tmp -maxdepth 2 -name 'onreach-deploy.tar.gz' -type f | head -1)"
+              ARCHIVE="$(find /tmp -name 'onreach-deploy.tar.gz' -type f 2>/dev/null | head -1)"
             fi
             if [ -z "$ARCHIVE" ] || [ ! -f "$ARCHIVE" ]; then
               echo "ERROR: deployment archive not found under /tmp"

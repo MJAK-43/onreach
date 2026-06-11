@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
+use ApiPlatform\Metadata\Get;
 use App\Domain\Candidate\Enum\DocumentStatus;
 use App\Domain\Candidate\Enum\DocumentType;
 use App\Entity\Candidate;
@@ -13,7 +14,6 @@ use App\Infrastructure\ApiPlatform\CandidateProvider;
 use App\Infrastructure\Candidate\CandidateTimelineService;
 use App\Infrastructure\Candidate\DocumentStorageService;
 use App\Repository\CandidateDocumentRepository;
-use ApiPlatform\Metadata\Get;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
