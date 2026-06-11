@@ -11,6 +11,7 @@ use App\Infrastructure\Mail\PasswordResetMailer;
 use App\Infrastructure\Security\SecurityLogService;
 use App\Repository\PasswordResetTokenRepository;
 use App\Repository\UserRepository;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final readonly class ForgotPasswordCommandHandler
 {
@@ -19,6 +20,8 @@ final readonly class ForgotPasswordCommandHandler
         private PasswordResetTokenRepository $tokenRepository,
         private SecurityLogService $securityLogService,
         private PasswordResetMailer $passwordResetMailer,
+        #[Autowire('%kernel.environment%')]
+        private string $environment,
     ) {
     }
 
@@ -47,7 +50,7 @@ final readonly class ForgotPasswordCommandHandler
         $this->securityLogService->log(SecurityEventType::PASSWORD_RESET_REQUESTED, $user);
         $this->passwordResetMailer->send($user, $plainToken);
 
-        if ('test' === ($_ENV['APP_ENV'] ?? '')) {
+        if ('test' === $this->environment) {
             $response['resetToken'] = $plainToken;
         }
 

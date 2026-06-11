@@ -27,7 +27,7 @@ describe('PermissionGate', () => {
       },
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useCurrentUserHook.useCurrentUser>)
+    } as unknown as ReturnType<typeof useCurrentUserHook.useCurrentUser>)
 
     render(
       <PermissionGate permission="users.view">
@@ -53,7 +53,7 @@ describe('PermissionGate', () => {
       },
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useCurrentUserHook.useCurrentUser>)
+    } as unknown as ReturnType<typeof useCurrentUserHook.useCurrentUser>)
 
     render(
       <PermissionGate permission="users.view">
