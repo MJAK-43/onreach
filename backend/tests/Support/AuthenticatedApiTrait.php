@@ -68,6 +68,9 @@ trait AuthenticatedApiTrait
         ];
     }
 
+    /**
+     * @return array{token: string, refreshToken: string}
+     */
     protected function loginAsCandidate(KernelBrowser $client): array
     {
         $client->request(

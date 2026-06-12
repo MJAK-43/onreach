@@ -16,7 +16,7 @@ final class Version20260612100000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("ALTER TABLE campus_france_applications ADD updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NOW() NOT NULL");
+        $this->addSql('ALTER TABLE campus_france_applications ADD updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NOW() NOT NULL');
         $this->addSql('ALTER TABLE campus_france_applications ALTER updated_at DROP DEFAULT');
 
         $this->addSql("ALTER TABLE paris_saclay_applications ADD status VARCHAR(255) DEFAULT 'draft' NOT NULL");

@@ -8,13 +8,12 @@ use App\Domain\Candidate\Enum\ApplicationType;
 use App\Domain\Candidate\Enum\CampusFranceStatus;
 use App\Domain\Candidate\Enum\DocumentStatus;
 use App\Domain\Candidate\Enum\DocumentType;
-use App\Domain\Candidate\Enum\ParisSaclayStatus;
 use App\Domain\Candidate\Enum\ParcoursupWishStatus;
+use App\Domain\Candidate\Enum\ParisSaclayStatus;
 use App\Entity\CampusFranceApplication;
 use App\Entity\Candidate;
 use App\Entity\CandidateDocument;
 use App\Entity\CandidateTimelineEntry;
-use App\Entity\ParisSaclayApplication;
 use App\Entity\ParcoursupApplication;
 use App\Entity\ParcoursupWish;
 use App\Entity\User;
@@ -521,9 +520,9 @@ final readonly class CandidatePortalService
 
     /**
      * @param list<array<string, mixed>> $documents
-     * @param array<string, mixed>      $campus
-     * @param array<string, mixed>      $parcoursup
-     * @param array<string, mixed>      $parisSaclay
+     * @param array<string, mixed>       $campus
+     * @param array<string, mixed>       $parcoursup
+     * @param array<string, mixed>       $parisSaclay
      *
      * @return list<array<string, mixed>>
      */

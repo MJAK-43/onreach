@@ -18,6 +18,7 @@ use App\Entity\ProfessionalProfile;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
 final readonly class CandidateProfileService
 {
     public function __construct(
