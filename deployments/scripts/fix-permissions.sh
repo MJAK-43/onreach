@@ -11,4 +11,8 @@ chmod -R 775 /opt/onreach/docker/grafana/data
 chmod -R 775 /opt/onreach/docker/prometheus/data
 chmod -R 775 /opt/onreach/docker/loki/data
 
+APP_DIR="${APP_DIR:-/opt/onreach/app}"
+mkdir -p "${APP_DIR}/backend/var/cache" "${APP_DIR}/backend/var/log"
+chmod -R 777 "${APP_DIR}/backend/var"
+
 echo "Volume permissions fixed."

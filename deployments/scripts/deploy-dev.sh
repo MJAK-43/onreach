@@ -14,10 +14,15 @@ docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
 
 echo "Syncing Composer dependencies (vendor volume may be stale after deploy)..."
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T backend \
-  composer install --no-interaction --ignore-platform-reqs --optimize-autoloader
+mkdir -p "${APP_DIR}/backend/var/cache" "${APP_DIR}/backend/var/log"
+chmod -R 777 "${APP_DIR}/backend/var"
 
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" restart backend backend-nginx
+# Avoid cache:clear race between composer post-install scripts and the running backend entrypoint.
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop backend || true
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" run --rm --no-deps backend \
+  sh -c 'rm -rf var/cache/* && composer install --no-interaction --ignore-platform-reqs --optimize-autoloader --no-scripts'
+
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d backend backend-nginx
 
 echo "Waiting for backend health..."
 for i in $(seq 1 60); do
