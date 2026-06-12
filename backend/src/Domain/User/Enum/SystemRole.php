@@ -52,6 +52,8 @@ enum SystemRole: string
                 SystemPermission::DOCUMENTS_VALIDATE,
                 SystemPermission::APPLICATIONS_VIEW,
                 SystemPermission::APPLICATIONS_EDIT,
+                SystemPermission::APPOINTMENTS_VIEW,
+                SystemPermission::APPOINTMENTS_MANAGE,
             ],
             self::COUNSELOR => [
                 SystemPermission::CANDIDATES_VIEW,
@@ -63,15 +65,20 @@ enum SystemRole: string
                 SystemPermission::DOCUMENTS_VALIDATE,
                 SystemPermission::APPLICATIONS_VIEW,
                 SystemPermission::APPLICATIONS_EDIT,
+                SystemPermission::APPOINTMENTS_VIEW,
+                SystemPermission::APPOINTMENTS_MANAGE,
             ],
             self::ACCOUNTANT, self::HOUSING_MANAGER => [
                 SystemPermission::USERS_VIEW,
             ],
             self::CANDIDATE => [
                 SystemPermission::CANDIDATES_VIEW,
+                SystemPermission::PROFILE_EDIT,
                 SystemPermission::DOCUMENTS_VIEW,
                 SystemPermission::DOCUMENTS_UPLOAD,
                 SystemPermission::APPLICATIONS_VIEW,
+                SystemPermission::APPOINTMENTS_VIEW,
+                SystemPermission::APPOINTMENTS_BOOK,
             ],
         };
     }

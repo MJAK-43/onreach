@@ -89,6 +89,36 @@ final class CandidateDocumentController extends AbstractController
         return new JsonResponse(['status' => $document->getStatus()->value]);
     }
 
+    #[Route('/{id}/documents/{documentId}/reject', name: 'candidate_document_reject', methods: ['POST'])]
+    #[IsGranted('documents.validate')]
+    public function reject(string $id, string $documentId, Request $request): JsonResponse
+    {
+        $candidate = $this->loadCandidate($id);
+        $document = $this->documentRepository->find($documentId);
+        if (!$document instanceof CandidateDocument || $document->getCandidate()->getId() !== $candidate->getId()) {
+            throw $this->createNotFoundException();
+        }
+
+        $payload = json_decode($request->getContent(), true);
+        $reason = trim((string) (is_array($payload) ? ($payload['reason'] ?? '') : ''));
+        if ('' === $reason) {
+            throw new BadRequestHttpException('Motif de refus obligatoire.');
+        }
+
+        $document->markRejected($reason);
+        $this->documentRepository->save($document);
+        $user = $this->getUser();
+        $this->timelineService->record(
+            $candidate,
+            'document.rejected',
+            'Document refusé : '.$document->getType()->label(),
+            ['reason' => $reason],
+            $user instanceof User ? $user : null,
+        );
+
+        return new JsonResponse(['status' => $document->getStatus()->value, 'rejectionReason' => $reason]);
+    }
+
     private function loadCandidate(string $id): Candidate
     {
         $result = $this->candidateProvider->provide(new Get(), ['id' => $id]);

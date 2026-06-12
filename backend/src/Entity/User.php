@@ -66,6 +66,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private bool $mfaEnabled = false;
 
+    #[ORM\Column(options: ['default' => true])]
+    private bool $appointmentCalendarEnabled = true;
+
     #[ORM\Column(nullable: true)]
     private ?string $mfaSecret = null;
 
@@ -219,6 +222,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setMfaEnabled(bool $mfaEnabled): self
     {
         $this->mfaEnabled = $mfaEnabled;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function isAppointmentCalendarEnabled(): bool
+    {
+        return $this->appointmentCalendarEnabled;
+    }
+
+    public function setAppointmentCalendarEnabled(bool $appointmentCalendarEnabled): self
+    {
+        $this->appointmentCalendarEnabled = $appointmentCalendarEnabled;
         $this->touch();
 
         return $this;

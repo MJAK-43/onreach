@@ -45,10 +45,25 @@ class CampusFranceApplication
     #[Groups(['candidate:read', 'candidate:write'])]
     private CampusFranceStatus $status;
 
+    #[ORM\Column]
+    #[Groups(['candidate:read'])]
+    private \DateTimeImmutable $updatedAt;
+
     public function __construct()
     {
         $this->id = Uuid::v7();
         $this->status = CampusFranceStatus::DRAFT;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getUpdatedAt(): \DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): Uuid
@@ -128,6 +143,7 @@ class CampusFranceApplication
     public function setStatus(CampusFranceStatus $status): self
     {
         $this->status = $status;
+        $this->touch();
 
         return $this;
     }

@@ -1,9 +1,8 @@
 import { Outlet } from 'react-router-dom'
 import { CandidateShell } from '@/components/layout/candidate/CandidateShell'
+import { StaffShell } from '@/components/layout/staff/StaffShell'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getPrimaryRole } from '@/lib/roles'
-import { Header } from './Header'
-import { Sidebar } from './Sidebar'
 
 export function MainLayout() {
   const { data: user, isLoading } = useCurrentUser()
@@ -18,14 +17,8 @@ export function MainLayout() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <main className="flex-1 p-6">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    <StaffShell>
+      <Outlet />
+    </StaffShell>
   )
 }

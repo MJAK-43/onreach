@@ -112,6 +112,87 @@ class Candidate
     #[Groups(['candidate:read', 'candidate:write'])]
     private ?string $country = null;
 
+    #[ORM\Column(length: 30, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $maritalStatus = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $passportNumber = null;
+
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?\DateTimeImmutable $passportIssuedAt = null;
+
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?\DateTimeImmutable $passportExpiresAt = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $passportCountry = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $identityCardNumber = null;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $postalCode = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $region = null;
+
+    #[ORM\Column(length: 30, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $whatsapp = null;
+
+    #[ORM\Column(length: 180, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $secondaryEmail = null;
+
+    #[ORM\Column(length: 150, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $studyDomain = null;
+
+    #[ORM\Column(length: 150, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $studySpecialty = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $studyLevel = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $studyTargetCountry = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $studyDescription = null;
+
+    /** @var list<string>|null */
+    #[ORM\Column(type: 'json', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?array $studyUniversities = null;
+
+    #[ORM\Column(length: 150, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $careerTargetJob = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $careerObjectives = null;
+
+    #[ORM\Column(length: 150, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $careerSector = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $careerDescription = null;
+
     #[ORM\Column(enumType: CandidateStatus::class)]
     #[Groups(['candidate:read', 'candidate:write'])]
     private CandidateStatus $status;
@@ -516,14 +597,278 @@ class Candidate
         return $this;
     }
 
+    #[Groups(['candidate:read'])]
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
+    #[Groups(['candidate:read'])]
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getMaritalStatus(): ?string
+    {
+        return $this->maritalStatus;
+    }
+
+    public function setMaritalStatus(?string $maritalStatus): self
+    {
+        $this->maritalStatus = $maritalStatus;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getPassportNumber(): ?string
+    {
+        return $this->passportNumber;
+    }
+
+    public function setPassportNumber(?string $passportNumber): self
+    {
+        $this->passportNumber = $passportNumber;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getPassportIssuedAt(): ?\DateTimeImmutable
+    {
+        return $this->passportIssuedAt;
+    }
+
+    public function setPassportIssuedAt(?\DateTimeImmutable $passportIssuedAt): self
+    {
+        $this->passportIssuedAt = $passportIssuedAt;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getPassportExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->passportExpiresAt;
+    }
+
+    public function setPassportExpiresAt(?\DateTimeImmutable $passportExpiresAt): self
+    {
+        $this->passportExpiresAt = $passportExpiresAt;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getPassportCountry(): ?string
+    {
+        return $this->passportCountry;
+    }
+
+    public function setPassportCountry(?string $passportCountry): self
+    {
+        $this->passportCountry = $passportCountry;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getIdentityCardNumber(): ?string
+    {
+        return $this->identityCardNumber;
+    }
+
+    public function setIdentityCardNumber(?string $identityCardNumber): self
+    {
+        $this->identityCardNumber = $identityCardNumber;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getPostalCode(): ?string
+    {
+        return $this->postalCode;
+    }
+
+    public function setPostalCode(?string $postalCode): self
+    {
+        $this->postalCode = $postalCode;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getRegion(): ?string
+    {
+        return $this->region;
+    }
+
+    public function setRegion(?string $region): self
+    {
+        $this->region = $region;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getWhatsapp(): ?string
+    {
+        return $this->whatsapp;
+    }
+
+    public function setWhatsapp(?string $whatsapp): self
+    {
+        $this->whatsapp = $whatsapp;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getSecondaryEmail(): ?string
+    {
+        return $this->secondaryEmail;
+    }
+
+    public function setSecondaryEmail(?string $secondaryEmail): self
+    {
+        $this->secondaryEmail = $secondaryEmail ? strtolower($secondaryEmail) : null;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getStudyDomain(): ?string
+    {
+        return $this->studyDomain;
+    }
+
+    public function setStudyDomain(?string $studyDomain): self
+    {
+        $this->studyDomain = $studyDomain;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getStudySpecialty(): ?string
+    {
+        return $this->studySpecialty;
+    }
+
+    public function setStudySpecialty(?string $studySpecialty): self
+    {
+        $this->studySpecialty = $studySpecialty;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getStudyLevel(): ?string
+    {
+        return $this->studyLevel;
+    }
+
+    public function setStudyLevel(?string $studyLevel): self
+    {
+        $this->studyLevel = $studyLevel;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getStudyTargetCountry(): ?string
+    {
+        return $this->studyTargetCountry;
+    }
+
+    public function setStudyTargetCountry(?string $studyTargetCountry): self
+    {
+        $this->studyTargetCountry = $studyTargetCountry;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getStudyDescription(): ?string
+    {
+        return $this->studyDescription;
+    }
+
+    public function setStudyDescription(?string $studyDescription): self
+    {
+        $this->studyDescription = $studyDescription;
+        $this->touch();
+
+        return $this;
+    }
+
+    /** @return list<string>|null */
+    public function getStudyUniversities(): ?array
+    {
+        return $this->studyUniversities;
+    }
+
+    /** @param list<string>|null $studyUniversities */
+    public function setStudyUniversities(?array $studyUniversities): self
+    {
+        $this->studyUniversities = $studyUniversities;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getCareerTargetJob(): ?string
+    {
+        return $this->careerTargetJob;
+    }
+
+    public function setCareerTargetJob(?string $careerTargetJob): self
+    {
+        $this->careerTargetJob = $careerTargetJob;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getCareerObjectives(): ?string
+    {
+        return $this->careerObjectives;
+    }
+
+    public function setCareerObjectives(?string $careerObjectives): self
+    {
+        $this->careerObjectives = $careerObjectives;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getCareerSector(): ?string
+    {
+        return $this->careerSector;
+    }
+
+    public function setCareerSector(?string $careerSector): self
+    {
+        $this->careerSector = $careerSector;
+        $this->touch();
+
+        return $this;
+    }
+
+    public function getCareerDescription(): ?string
+    {
+        return $this->careerDescription;
+    }
+
+    public function setCareerDescription(?string $careerDescription): self
+    {
+        $this->careerDescription = $careerDescription;
+        $this->touch();
+
+        return $this;
     }
 
     #[Groups(['candidate:read'])]

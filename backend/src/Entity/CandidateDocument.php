@@ -69,6 +69,10 @@ class CandidateDocument
     #[Groups(['candidate:read', 'candidate:write'])]
     private ?string $rejectionReason = null;
 
+    #[ORM\Column]
+    #[Groups(['candidate:read'])]
+    private int $version = 1;
+
     public function __construct(Candidate $candidate, DocumentType $type, DocumentStatus $status = DocumentStatus::MISSING)
     {
         $this->id = Uuid::v7();
@@ -250,6 +254,28 @@ class CandidateDocument
         $this->validatedAt = new \DateTimeImmutable();
         $this->validatedBy = $validator;
         $this->rejectionReason = null;
+
+        return $this;
+    }
+
+    public function markRejected(string $reason): self
+    {
+        $this->status = DocumentStatus::REJECTED;
+        $this->rejectionReason = $reason;
+        $this->validatedAt = null;
+        $this->validatedBy = null;
+
+        return $this;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function incrementVersion(): self
+    {
+        ++$this->version;
 
         return $this;
     }

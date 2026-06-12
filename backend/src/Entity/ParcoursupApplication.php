@@ -22,7 +22,7 @@ class ParcoursupApplication
 
     #[ORM\OneToOne(inversedBy: 'parcoursupApplication', targetEntity: Candidate::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Candidate $candidate;
+    private ?Candidate $candidate = null;
 
     #[ORM\Column(length: 20, nullable: true)]
     #[Groups(['candidate:read', 'candidate:write'])]
@@ -66,7 +66,7 @@ class ParcoursupApplication
         return $this->id;
     }
 
-    public function getCandidate(): Candidate
+    public function getCandidate(): ?Candidate
     {
         return $this->candidate;
     }

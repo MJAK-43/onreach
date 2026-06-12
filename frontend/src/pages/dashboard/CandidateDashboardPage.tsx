@@ -47,15 +47,6 @@ const DEMO_TASKS = [
   { label: 'Prendre rendez-vous pour demande de visa', deadline: '15 Juin 2024', urgent: false },
 ]
 
-const GUIDES = [
-  { title: 'Calendrier Campus France', subtitle: 'Dates clés 2024', color: 'from-blue-600 to-blue-700', link: 'Voir le calendrier' },
-  { title: 'Frais à prévoir', subtitle: 'Budget études France', color: 'from-emerald-600 to-teal-700', link: 'Estimer mes frais' },
-  { title: 'Pièces pour le visa', subtitle: 'Liste complète', color: 'from-violet-600 to-purple-700', link: 'Voir la liste' },
-  { title: 'Étapes d\'accompagnement', subtitle: 'Votre parcours', color: 'from-orange-500 to-amber-600', link: 'Voir les étapes' },
-  { title: 'Parcoursup / Paris Saclay', subtitle: 'Procédures spéciales', color: 'from-pink-500 to-rose-600', link: 'En savoir plus' },
-  { title: 'Liens utiles', subtitle: 'Ressources officielles', color: 'from-cyan-600 to-sky-700', link: 'Accéder' },
-]
-
 function counselorName(counselor: CounselorSummary | string | null | undefined): string {
   if (!counselor || typeof counselor === 'string') return 'Marie Kouassi'
   return `${counselor.firstName ?? ''} ${counselor.lastName ?? ''}`.trim() || 'Marie Kouassi'
@@ -321,29 +312,6 @@ export function CandidateDashboardPage() {
         </Panel>
       </div>
 
-      {/* Guides */}
-      <section>
-        <SectionTitle className="mb-4">Guides & Ressources</SectionTitle>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
-          {GUIDES.map((guide) => (
-            <div
-              key={guide.title}
-              className={`flex min-h-[130px] flex-col justify-between rounded-2xl bg-gradient-to-br ${guide.color} p-5 text-white shadow-sm transition-shadow hover:shadow-md`}
-            >
-              <div>
-                <h4 className="font-semibold leading-snug">{guide.title}</h4>
-                <p className="mt-1 text-sm text-white/75">{guide.subtitle}</p>
-              </div>
-              <button
-                type="button"
-                className="mt-3 w-fit text-left text-sm font-medium text-white/90 hover:text-white"
-              >
-                {guide.link} →
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

@@ -1,18 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, ChevronDown, Globe, LogOut, Menu, User } from 'lucide-react'
+import { Bell, ChevronDown, Globe, LogOut, Menu, Shield, User } from 'lucide-react'
 import { logout } from '@/lib/api'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getRoleLabel, getPrimaryRole } from '@/lib/roles'
 
-export function CandidateHeader() {
+export function AppHeader() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: user } = useCurrentUser()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const role = getPrimaryRole(user?.roles)
+  const isStaff = role !== 'CANDIDATE'
 
   const logoutMutation = useMutation({
     mutationFn: logout,
@@ -34,7 +35,7 @@ export function CandidateHeader() {
 
   const initials = user
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
-    : 'CK'
+    : 'OR'
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
@@ -82,6 +83,16 @@ export function CandidateHeader() {
                 <User className="h-4 w-4" />
                 Mon profil
               </button>
+              {isStaff && (
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-slate-50"
+                  onClick={() => { setMenuOpen(false); navigate('/admin/security') }}
+                >
+                  <Shield className="h-4 w-4" />
+                  Sécurité
+                </button>
+              )}
               <button
                 type="button"
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-slate-50"

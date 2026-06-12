@@ -37,6 +37,8 @@ if [ ! -f config/jwt/private.pem ]; then
 fi
 
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration || true
+php bin/console cache:clear --no-warmup || true
+php bin/console cache:warmup || true
 php bin/console app:seed:rbac --no-interaction || true
 php bin/console app:seed:checklist --no-interaction || true
 php bin/console app:seed:demo-users --no-interaction || true

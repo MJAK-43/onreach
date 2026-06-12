@@ -27,6 +27,17 @@ Tous les pipelines **échouent** en cas d'erreur. Aucune désactivation autoris�
 2. `develop` → `preprod` (après deploy DEV)
 3. `preprod` → `main` (après deploy PREPROD, merge manuel requis)
 
+## Sprint Candidat — Mes démarches
+
+Branche : portail candidat `/demarches` + API `/api/me/applications`, `/api/me/campus-france`, etc.
+
+Tests :
+
+```bash
+cd backend && php bin/phpunit tests/Presentation/Controller/MeApplicationsApiTest.php
+cd frontend && npm test -- --run src/test/Demarches.test.tsx
+```
+
 ## Sprint 2 — Branche
 
 `feature/sprint-2-candidate` : module Dossier Étudiant Unifié.

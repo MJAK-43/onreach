@@ -32,6 +32,11 @@ class LanguageProfile
     #[Groups(['candidate:read', 'candidate:write'])]
     private ?string $englishLevel = null;
 
+    /** @var list<array<string, string>>|null */
+    #[ORM\Column(type: 'json', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?array $otherLanguages = null;
+
     /** @var Collection<int, LanguageCertificate> */
     #[ORM\OneToMany(mappedBy: 'languageProfile', targetEntity: LanguageCertificate::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['candidate:read', 'candidate:write'])]
@@ -83,6 +88,20 @@ class LanguageProfile
     public function setEnglishLevel(?string $englishLevel): self
     {
         $this->englishLevel = $englishLevel;
+
+        return $this;
+    }
+
+    /** @return list<array<string, string>>|null */
+    public function getOtherLanguages(): ?array
+    {
+        return $this->otherLanguages;
+    }
+
+    /** @param list<array<string, string>>|null $otherLanguages */
+    public function setOtherLanguages(?array $otherLanguages): self
+    {
+        $this->otherLanguages = $otherLanguages;
 
         return $this;
     }

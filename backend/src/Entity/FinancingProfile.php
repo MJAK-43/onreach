@@ -29,6 +29,18 @@ class FinancingProfile
     #[Groups(['candidate:read', 'candidate:write'])]
     private FinancingType $type;
 
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $availableBudget = null;
+
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $plannedAmount = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $description = null;
+
     /** @var Collection<int, Guarantor> */
     #[ORM\OneToMany(mappedBy: 'financingProfile', targetEntity: Guarantor::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['candidate:read', 'candidate:write'])]
@@ -69,6 +81,42 @@ class FinancingProfile
     public function setType(FinancingType $type): self
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    public function getAvailableBudget(): ?string
+    {
+        return $this->availableBudget;
+    }
+
+    public function setAvailableBudget(?string $availableBudget): self
+    {
+        $this->availableBudget = $availableBudget;
+
+        return $this;
+    }
+
+    public function getPlannedAmount(): ?string
+    {
+        return $this->plannedAmount;
+    }
+
+    public function setPlannedAmount(?string $plannedAmount): self
+    {
+        $this->plannedAmount = $plannedAmount;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }

@@ -50,6 +50,18 @@ class AcademicRecord
     #[Groups(['candidate:read', 'candidate:write'])]
     private ?string $achievements = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $diplomaType = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $country = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $mention = null;
+
     public function __construct(string $diploma, string $institution, int $year)
     {
         $this->id = Uuid::v7();
@@ -155,6 +167,42 @@ class AcademicRecord
     public function setAchievements(?string $achievements): self
     {
         $this->achievements = $achievements;
+
+        return $this;
+    }
+
+    public function getDiplomaType(): ?string
+    {
+        return $this->diplomaType;
+    }
+
+    public function setDiplomaType(?string $diplomaType): self
+    {
+        $this->diplomaType = $diplomaType;
+
+        return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function setCountry(?string $country): self
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function getMention(): ?string
+    {
+        return $this->mention;
+    }
+
+    public function setMention(?string $mention): self
+    {
+        $this->mention = $mention;
 
         return $this;
     }

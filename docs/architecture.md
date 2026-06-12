@@ -70,3 +70,15 @@ On'Reach est une plateforme SaaS modulaire pour l'accompagnement des étudiants 
 ### Frontend Sprint 2
 
 Pages React : liste, création, fiche candidat avec tableau de complétude et onglets.
+
+## Sprint Candidat — Portail Mes démarches
+
+### API dédiée candidat
+
+`MeApplicationsController` (`/api/me/*`) + `CandidatePortalService` + `CandidateResolver`.
+
+### Frontend
+
+Routes `/demarches/*` avec `DemarchesLayout` (navigation latérale / onglets mobile).
+
+Voir `docs/candidate-portal.md` et `docs/applications-tracking.md`.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Domain\Candidate\Enum\ParcoursupWishStatus;
 use App\Repository\ParcoursupWishRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -34,12 +35,20 @@ class ParcoursupWish
     #[Groups(['candidate:read', 'candidate:write'])]
     private string $program;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(enumType: ParcoursupWishStatus::class)]
     #[Groups(['candidate:read', 'candidate:write'])]
-    private string $status;
+    private ParcoursupWishStatus $status;
 
-    public function __construct(int $rank, string $university, string $program, string $status = 'pending')
-    {
+    #[ORM\Column(nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?\DateTimeImmutable $submittedAt = null;
+
+    public function __construct(
+        int $rank,
+        string $university,
+        string $program,
+        ParcoursupWishStatus $status = ParcoursupWishStatus::BROUILLON,
+    ) {
         $this->id = Uuid::v7();
         $this->rank = $rank;
         $this->university = $university;
@@ -100,14 +109,26 @@ class ParcoursupWish
         return $this;
     }
 
-    public function getStatus(): string
+    public function getStatus(): ParcoursupWishStatus
     {
         return $this->status;
     }
 
-    public function setStatus(string $status): self
+    public function setStatus(ParcoursupWishStatus $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getSubmittedAt(): ?\DateTimeImmutable
+    {
+        return $this->submittedAt;
+    }
+
+    public function setSubmittedAt(?\DateTimeImmutable $submittedAt): self
+    {
+        $this->submittedAt = $submittedAt;
 
         return $this;
     }

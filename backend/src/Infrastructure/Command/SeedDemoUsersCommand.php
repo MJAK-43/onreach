@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Command;
 
+use App\Domain\Candidate\Enum\CampusFranceStatus;
 use App\Domain\Candidate\Enum\CandidateStatus;
 use App\Domain\Candidate\Enum\DocumentStatus;
 use App\Domain\Candidate\Enum\DocumentType;
+use App\Domain\Candidate\Enum\ParisSaclayDegreeLevel;
+use App\Domain\Candidate\Enum\ParisSaclayStatus;
+use App\Domain\Candidate\Enum\ParcoursupWishStatus;
 use App\Domain\User\Enum\SystemRole;
 use App\Entity\CampusFranceApplication;
 use App\Entity\Candidate;
 use App\Entity\CandidateDocument;
+use App\Entity\ParisSaclayApplication;
+use App\Entity\ParcoursupApplication;
+use App\Entity\ParcoursupWish;
 use App\Entity\User;
 use App\Infrastructure\Candidate\CandidateReferenceGenerator;
 use App\Infrastructure\Candidate\CandidateTimelineService;
@@ -99,16 +106,43 @@ final class SeedDemoUsersCommand extends Command
 
             $campusFrance = new CampusFranceApplication();
             $campusFrance->setStudyProject('Master en informatique à Paris');
+            $campusFrance->setStatus(CampusFranceStatus::ADMISSION_OBTAINED);
             $dossier->setCampusFranceApplication($campusFrance);
+
+            $parcoursup = new ParcoursupApplication();
+            $parcoursup->setIneNumber('123456789AB');
+            $parcoursup->setHighSchool('Lycée Moderne d\'Abidjan');
+            $parcoursup->setMotivationProject('Projet d\'études en informatique et IA');
+            $wish1 = new ParcoursupWish(1, 'Université Paris-Saclay', 'Licence Informatique', ParcoursupWishStatus::ACCEPTE);
+            $wish1->setSubmittedAt(new \DateTimeImmutable('-30 days'));
+            $parcoursup->addWish($wish1);
+            $wish2 = new ParcoursupWish(2, 'Sorbonne Université', 'Licence Mathématiques', ParcoursupWishStatus::LISTE_ATTENTE);
+            $wish2->setSubmittedAt(new \DateTimeImmutable('-28 days'));
+            $parcoursup->addWish($wish2);
+            $dossier->setParcoursupApplication($parcoursup);
+
+            $parisSaclay = new ParisSaclayApplication();
+            $parisSaclay->setDegreeLevel(ParisSaclayDegreeLevel::MASTER);
+            $parisSaclay->setResearchProject('Apprentissage profond appliqué à la santé');
+            $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
+            $dossier->setParisSaclayApplication($parisSaclay);
+
+            $motivation = new CandidateDocument($dossier, DocumentType::MOTIVATION_LETTER, DocumentStatus::UPLOADED);
+            $transcript = new CandidateDocument($dossier, DocumentType::TRANSCRIPT, DocumentStatus::VALIDATED);
+            $dossier->addDocument($motivation);
+            $dossier->addDocument($transcript);
 
             $this->candidateRepository->save($dossier, false);
             $this->timelineService->record($dossier, 'candidate.created', 'Dossier candidat créé');
+            $this->timelineService->record($dossier, 'document.uploaded', 'Passeport ajouté');
+            $this->timelineService->record($dossier, 'document.validated', 'CV validé');
             $this->timelineService->record($dossier, 'candidate.status_changed', 'Admission obtenue');
             $io->success('Dossier démo Mohamed Koffi créé.');
         } else {
             if (null === $dossier->getAssignedCounselor()) {
                 $dossier->setAssignedCounselor($counselor);
             }
+            $this->ensureDemoApplications($dossier);
             $io->note('Dossier démo Mohamed Koffi existant.');
         }
 
@@ -118,6 +152,27 @@ final class SeedDemoUsersCommand extends Command
         $io->success('Utilisateurs et dossiers de démonstration prêts.');
 
         return Command::SUCCESS;
+    }
+
+    private function ensureDemoApplications(Candidate $dossier): void
+    {
+        if (null === $dossier->getParcoursupApplication()) {
+            $parcoursup = new ParcoursupApplication();
+            $parcoursup->addWish(new ParcoursupWish(1, 'Université Paris-Saclay', 'Licence Informatique', ParcoursupWishStatus::ACCEPTE));
+            $dossier->setParcoursupApplication($parcoursup);
+        }
+
+        if (null === $dossier->getParisSaclayApplication()) {
+            $parisSaclay = new ParisSaclayApplication();
+            $parisSaclay->setDegreeLevel(ParisSaclayDegreeLevel::MASTER);
+            $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
+            $dossier->setParisSaclayApplication($parisSaclay);
+        }
+
+        $campus = $dossier->getCampusFranceApplication();
+        if ($campus instanceof CampusFranceApplication && CampusFranceStatus::DRAFT === $campus->getStatus()) {
+            $campus->setStatus(CampusFranceStatus::ADMISSION_OBTAINED);
+        }
     }
 
     private function seedExtraCandidates(User $counselor): void

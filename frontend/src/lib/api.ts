@@ -21,6 +21,7 @@ export interface CurrentUser {
   permissions: string[]
   mfaEnabled: boolean
   isActive: boolean
+  appointmentCalendarEnabled?: boolean
   createdAt?: string
 }
 
@@ -39,6 +40,12 @@ export interface LoginResponse {
   requiresMfa?: boolean
 }
 
+export interface UserRoleRef {
+  id?: string
+  code?: string
+  name?: string
+}
+
 export interface UserListItem {
   id: string
   email: string
@@ -46,6 +53,7 @@ export interface UserListItem {
   lastName: string
   isActive: boolean
   mfaEnabled: boolean
+  roles?: Array<UserRoleRef | string>
 }
 
 export interface RoleListItem {
@@ -321,12 +329,16 @@ export interface CandidateCompletion {
 export interface CandidateDocumentItem {
   id: string
   type: string
+  typeLabel?: string
   status: string
+  statusLabel?: string
   originalFilename?: string | null
   mimeType?: string | null
   size?: number | null
   uploadedAt?: string | null
   validatedAt?: string | null
+  rejectionReason?: string | null
+  version?: number
 }
 
 export interface CandidateTimelineItem {
@@ -383,8 +395,51 @@ export async function updateCandidate(
   })
 }
 
+export async function assignCandidateCounselor(
+  candidateId: string,
+  counselorId: string | null,
+): Promise<CandidateListItem> {
+  const candidate = await fetchCandidate(candidateId)
+  return apiRequest<CandidateListItem>(`/api/candidates/${candidateId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      firstName: candidate.firstName,
+      lastName: candidate.lastName,
+      email: candidate.email,
+      nationality: candidate.nationality,
+      status: candidate.status,
+      phone: candidate.phone ?? undefined,
+      city: candidate.city ?? undefined,
+      country: candidate.country ?? undefined,
+      assignedCounselor: counselorId ? `/api/users/${counselorId}` : null,
+    }),
+  })
+}
+
 export async function fetchCandidateDocuments(id: string): Promise<CandidateDocumentItem[]> {
   return apiRequest<CandidateDocumentItem[]>(`/api/candidates/${id}/documents`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function validateCandidateDocument(
+  candidateId: string,
+  documentId: string,
+): Promise<{ status: string }> {
+  return apiRequest(`/api/candidates/${candidateId}/documents/${documentId}/validate`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function rejectCandidateDocument(
+  candidateId: string,
+  documentId: string,
+  reason: string,
+): Promise<{ status: string; rejectionReason: string }> {
+  return apiRequest(`/api/candidates/${candidateId}/documents/${documentId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
     headers: { Accept: 'application/json' },
   })
 }
@@ -414,6 +469,111 @@ export async function createCandidateNote(
   return apiRequest(`/api/candidates/${id}/notes`, {
     method: 'POST',
     body: JSON.stringify(payload),
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export interface AppointmentCounselorSummary {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+}
+
+export interface AppointmentSlot {
+  id: string
+  startsAt: string
+  endsAt: string
+  status: 'available' | 'booked' | 'cancelled'
+  subject?: string | null
+  bookedAt?: string | null
+  candidate?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    referenceNumber: string
+  }
+}
+
+export interface AvailableAppointmentsResponse {
+  counselor: AppointmentCounselorSummary | null
+  slots: AppointmentSlot[]
+  calendarEnabled?: boolean
+}
+
+export async function fetchAvailableAppointments(from: string, to: string): Promise<AvailableAppointmentsResponse> {
+  const params = new URLSearchParams({ from, to })
+  return apiRequest<AvailableAppointmentsResponse>(`/api/appointments/available?${params}`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function fetchMyAppointments(): Promise<AppointmentSlot[]> {
+  return apiRequest<AppointmentSlot[]>('/api/appointments/mine', {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function bookAppointment(slotId: string, subject?: string): Promise<AppointmentSlot> {
+  return apiRequest<AppointmentSlot>('/api/appointments/book', {
+    method: 'POST',
+    body: JSON.stringify({ slotId, subject }),
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function fetchCounselorSchedule(from: string, to: string): Promise<AppointmentSlot[]> {
+  const params = new URLSearchParams({ from, to })
+  return apiRequest<AppointmentSlot[]>(`/api/appointments/counselor?${params}`, {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function createAppointmentSlots(
+  date: string,
+  times: string[],
+): Promise<AppointmentSlot[]> {
+  return apiRequest<AppointmentSlot[]>('/api/appointments/slots', {
+    method: 'POST',
+    body: JSON.stringify({ date, times }),
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function createAppointmentSlot(date: string, time: string): Promise<AppointmentSlot[]> {
+  return apiRequest<AppointmentSlot[]>('/api/appointments/slots', {
+    method: 'POST',
+    body: JSON.stringify({ date, time }),
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function deleteAppointmentSlot(id: string): Promise<void> {
+  await apiRequest<void>(`/api/appointments/slots/${id}`, {
+    method: 'DELETE',
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function closeAppointmentSlots(date: string, times: string[]): Promise<{ removed: number }> {
+  return apiRequest<{ removed: number }>('/api/appointments/slots/close', {
+    method: 'POST',
+    body: JSON.stringify({ date, times }),
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function fetchCalendarSettings(): Promise<{ enabled: boolean }> {
+  return apiRequest<{ enabled: boolean }>('/api/appointments/calendar', {
+    headers: { Accept: 'application/json' },
+  })
+}
+
+export async function updateCalendarSettings(enabled: boolean): Promise<{ enabled: boolean }> {
+  return apiRequest<{ enabled: boolean }>('/api/appointments/calendar', {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
     headers: { Accept: 'application/json' },
   })
 }

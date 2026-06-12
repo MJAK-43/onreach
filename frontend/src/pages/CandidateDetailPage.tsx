@@ -8,6 +8,9 @@ import {
   fetchCandidateDocuments,
   fetchCandidateNotes,
   fetchCandidateTimeline,
+  rejectCandidateDocument,
+  validateCandidateDocument,
+  type CandidateDocumentItem,
 } from '@/lib/api'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Button } from '@/components/ui/button'
@@ -145,31 +148,12 @@ export function CandidateDetailPage() {
         </Card>
       )}
 
-      {tab === 'documents' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Documents</CardTitle>
-            <CardDescription>
-              {documentsQuery.data?.length ?? 0} document(s)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {documentsQuery.isLoading && <p className="text-sm">Chargement...</p>}
-            {documentsQuery.data?.length === 0 && (
-              <p className="text-sm text-muted-foreground">Aucun document.</p>
-            )}
-            {documentsQuery.data && documentsQuery.data.length > 0 && (
-              <ul className="space-y-2 text-sm">
-                {documentsQuery.data.map((doc) => (
-                  <li key={doc.id} className="flex justify-between border-b border-border py-2">
-                    <span>{doc.type}</span>
-                    <span className="text-muted-foreground">{doc.status}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+      {tab === 'documents' && id && (
+        <DocumentsTab
+          candidateId={id}
+          documents={documentsQuery.data ?? []}
+          loading={documentsQuery.isLoading}
+        />
       )}
 
       {tab === 'campus' && completionQuery.data && (
@@ -224,6 +208,134 @@ export function CandidateDetailPage() {
         </PermissionGate>
       )}
     </div>
+  )
+}
+
+const DOC_STATUS_COLORS: Record<string, string> = {
+  missing: 'bg-slate-100 text-slate-600',
+  uploaded: 'bg-blue-50 text-blue-700',
+  validated: 'bg-emerald-50 text-emerald-700',
+  rejected: 'bg-red-50 text-red-700',
+}
+
+function DocumentsTab({
+  candidateId,
+  documents,
+  loading,
+}: {
+  candidateId: string
+  documents: CandidateDocumentItem[]
+  loading: boolean
+}) {
+  const queryClient = useQueryClient()
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+
+  const validateMutation = useMutation({
+    mutationFn: (documentId: string) => validateCandidateDocument(candidateId, documentId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['candidate-documents', candidateId] })
+      void queryClient.invalidateQueries({ queryKey: ['candidate-timeline', candidateId] })
+    },
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ documentId, reason }: { documentId: string; reason: string }) =>
+      rejectCandidateDocument(candidateId, documentId, reason),
+    onSuccess: () => {
+      setRejectingId(null)
+      setRejectReason('')
+      void queryClient.invalidateQueries({ queryKey: ['candidate-documents', candidateId] })
+      void queryClient.invalidateQueries({ queryKey: ['candidate-timeline', candidateId] })
+    },
+  })
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Documents</CardTitle>
+        <CardDescription>{documents.length} document(s) — validation conseiller</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading && <p className="text-sm">Chargement...</p>}
+        {!loading && documents.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aucun document téléversé.</p>
+        )}
+        <ul className="space-y-3">
+          {documents.map((doc) => (
+            <li key={doc.id} className="rounded-lg border border-border p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{doc.typeLabel ?? doc.type}</p>
+                  <p className="text-sm text-muted-foreground">{doc.originalFilename ?? '—'}</p>
+                  {doc.rejectionReason && (
+                    <p className="mt-1 text-sm text-red-600">Motif : {doc.rejectionReason}</p>
+                  )}
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    DOC_STATUS_COLORS[doc.status] ?? DOC_STATUS_COLORS.missing
+                  }`}
+                >
+                  {doc.statusLabel ?? doc.status}
+                </span>
+              </div>
+
+              <PermissionGate permission="documents.validate">
+                {doc.status === 'uploaded' && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => validateMutation.mutate(doc.id)}
+                      disabled={validateMutation.isPending}
+                    >
+                      Valider
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRejectingId(doc.id)}
+                    >
+                      Refuser
+                    </Button>
+                  </div>
+                )}
+              </PermissionGate>
+
+              {rejectingId === doc.id && (
+                <div className="mt-3 space-y-2 rounded-md bg-muted/50 p-3">
+                  <Label htmlFor={`reject-${doc.id}`}>Motif de refus (obligatoire)</Label>
+                  <textarea
+                    id={`reject-${doc.id}`}
+                    className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      disabled={!rejectReason.trim() || rejectMutation.isPending}
+                      onClick={() =>
+                        rejectMutation.mutate({ documentId: doc.id, reason: rejectReason.trim() })
+                      }
+                    >
+                      Confirmer le refus
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setRejectingId(null)}>
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   )
 }
 

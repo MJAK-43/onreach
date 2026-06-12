@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Domain\Candidate\Enum\ParisSaclayDegreeLevel;
+use App\Domain\Candidate\Enum\ParisSaclayStatus;
 use App\Repository\ParisSaclayApplicationRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -21,7 +22,11 @@ class ParisSaclayApplication
 
     #[ORM\OneToOne(inversedBy: 'parisSaclayApplication', targetEntity: Candidate::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private Candidate $candidate;
+    private ?Candidate $candidate = null;
+
+    #[ORM\Column(enumType: ParisSaclayStatus::class)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ParisSaclayStatus $status;
 
     #[ORM\Column(enumType: ParisSaclayDegreeLevel::class, nullable: true)]
     #[Groups(['candidate:read', 'candidate:write'])]
@@ -44,6 +49,19 @@ class ParisSaclayApplication
     public function __construct()
     {
         $this->id = Uuid::v7();
+        $this->status = ParisSaclayStatus::DRAFT;
+    }
+
+    public function getStatus(): ParisSaclayStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(ParisSaclayStatus $status): self
+    {
+        $this->status = $status;
+
+        return $this;
     }
 
     public function getId(): Uuid
@@ -51,7 +69,7 @@ class ParisSaclayApplication
         return $this->id;
     }
 
-    public function getCandidate(): Candidate
+    public function getCandidate(): ?Candidate
     {
         return $this->candidate;
     }

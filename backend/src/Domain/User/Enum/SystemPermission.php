@@ -26,6 +26,10 @@ enum SystemPermission: string
     case DOCUMENTS_VALIDATE = 'documents.validate';
     case APPLICATIONS_VIEW = 'applications.view';
     case APPLICATIONS_EDIT = 'applications.edit';
+    case APPOINTMENTS_VIEW = 'appointments.view';
+    case APPOINTMENTS_BOOK = 'appointments.book';
+    case APPOINTMENTS_MANAGE = 'appointments.manage';
+    case PROFILE_EDIT = 'profile.edit';
 
     public function label(): string
     {
@@ -50,6 +54,10 @@ enum SystemPermission: string
             self::DOCUMENTS_VALIDATE => 'Valider les documents',
             self::APPLICATIONS_VIEW => 'Voir les candidatures',
             self::APPLICATIONS_EDIT => 'Modifier les candidatures',
+            self::APPOINTMENTS_VIEW => 'Voir les rendez-vous',
+            self::APPOINTMENTS_BOOK => 'Réserver un rendez-vous',
+            self::APPOINTMENTS_MANAGE => 'Gérer les créneaux conseiller',
+            self::PROFILE_EDIT => 'Modifier son profil candidat',
         };
     }
 }

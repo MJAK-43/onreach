@@ -52,6 +52,10 @@ services:
             $frontendUrl: '%app.frontend_url%'
             $fromAddress: '%app.mailer_from%'
 
+    App\Infrastructure\Mail\AppointmentBookedMailer:
+        arguments:
+            $fromAddress: '%app.mailer_from%'
+
     App\Application\Auth\Command\LoginCommandHandler:
         arguments:
             $refreshTokenTtl: 2592000

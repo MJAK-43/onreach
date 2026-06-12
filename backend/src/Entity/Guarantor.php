@@ -46,6 +46,18 @@ class Guarantor
     #[Groups(['candidate:read', 'candidate:write'])]
     private ?string $address = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $firstName = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $lastName = null;
+
+    #[ORM\Column(length: 150, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?string $employer = null;
+
     public function __construct(string $fullName)
     {
         $this->id = Uuid::v7();
@@ -137,6 +149,42 @@ class Guarantor
     public function setAddress(?string $address): self
     {
         $this->address = $address;
+
+        return $this;
+    }
+
+    public function getFirstName(): ?string
+    {
+        return $this->firstName;
+    }
+
+    public function setFirstName(?string $firstName): self
+    {
+        $this->firstName = $firstName;
+
+        return $this;
+    }
+
+    public function getLastName(): ?string
+    {
+        return $this->lastName;
+    }
+
+    public function setLastName(?string $lastName): self
+    {
+        $this->lastName = $lastName;
+
+        return $this;
+    }
+
+    public function getEmployer(): ?string
+    {
+        return $this->employer;
+    }
+
+    public function setEmployer(?string $employer): self
+    {
+        $this->employer = $employer;
 
         return $this;
     }

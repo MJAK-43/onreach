@@ -34,6 +34,7 @@ final readonly class GetCurrentUserQueryHandler
             'permissions' => $user->getPermissions(),
             'mfaEnabled' => $user->isMfaEnabled(),
             'isActive' => $user->isActive(),
+            'appointmentCalendarEnabled' => $user->isAppointmentCalendarEnabled(),
             'createdAt' => $user->getCreatedAt()->format(\DateTimeInterface::ATOM),
         ];
     }

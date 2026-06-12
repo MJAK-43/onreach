@@ -25,4 +25,12 @@ final class CandidateDocumentRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
+
+    public function remove(CandidateDocument $document, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($document);
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
 }
