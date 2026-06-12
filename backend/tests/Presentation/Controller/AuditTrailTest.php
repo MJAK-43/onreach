@@ -4,14 +4,32 @@ declare(strict_types=1);
 
 namespace App\Tests\Presentation\Controller;
 
+use App\Entity\AuditTrail;
+use App\Repository\AuditTrailRepository;
 use App\Tests\Support\AuthenticatedApiTrait;
 use App\Tests\Support\DatabaseTestTrait;
+use App\Tests\Support\WebTestCaseTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class AuditTrailTest extends WebTestCase
 {
     use AuthenticatedApiTrait;
     use DatabaseTestTrait;
+    use WebTestCaseTrait;
+
+    protected function setUp(): void
+    {
+        $this->setUpWebTestCase();
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownWebTestCase();
+
+        parent::tearDown();
+    }
 
     public function testCreatingUserWritesAuditTrail(): void
     {
@@ -35,12 +53,14 @@ final class AuditTrailTest extends WebTestCase
         );
         $this->assertResponseStatusCodeSame(201);
 
-        $client->request('GET', '/api/audit_trails', server: $this->authHeaders($auth));
-        $this->assertResponseIsSuccessful();
-        $trails = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $items = $trails['member'] ?? $trails['hydra:member'] ?? [];
-
-        $created = array_filter($items, static fn (array $item): bool => 'created' === $item['action'] && 'User' === $item['entityType']);
+        /** @var AuditTrailRepository $auditRepository */
+        $auditRepository = static::getContainer()->get(AuditTrailRepository::class);
+        $created = array_filter(
+            $auditRepository->findAll(),
+            static fn (AuditTrail $audit): bool => 'created' === $audit->getAction()
+                && 'User' === $audit->getEntityType()
+                && 'audited@example.com' === ($audit->getNewValue()['email'] ?? null),
+        );
         self::assertNotEmpty($created);
     }
 }

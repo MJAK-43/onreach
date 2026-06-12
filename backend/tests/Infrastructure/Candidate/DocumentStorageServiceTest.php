@@ -10,6 +10,13 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class DocumentStorageServiceTest extends KernelTestCase
 {
+    protected function tearDown(): void
+    {
+        self::ensureKernelShutdown();
+
+        parent::tearDown();
+    }
+
     public function testStoreCreatesFileOnDisk(): void
     {
         self::bootKernel();

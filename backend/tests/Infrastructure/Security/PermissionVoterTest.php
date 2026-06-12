@@ -28,6 +28,13 @@ final class PermissionVoterTest extends KernelTestCase
         $this->accessDecisionManager = static::getContainer()->get(AccessDecisionManagerInterface::class);
     }
 
+    protected function tearDown(): void
+    {
+        self::ensureKernelShutdown();
+
+        parent::tearDown();
+    }
+
     #[DataProvider('adminPermissionsProvider')]
     public function testSuperAdminIsGrantedAllPermissions(string $permission): void
     {

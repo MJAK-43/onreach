@@ -8,12 +8,28 @@ use App\Entity\CounselorAvailabilitySlot;
 use App\Entity\User;
 use App\Tests\Support\AuthenticatedApiTrait;
 use App\Tests\Support\DatabaseTestTrait;
+use App\Tests\Support\WebTestCaseTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class AppointmentApiTest extends WebTestCase
 {
     use AuthenticatedApiTrait;
     use DatabaseTestTrait;
+    use WebTestCaseTrait;
+
+    protected function setUp(): void
+    {
+        $this->setUpWebTestCase();
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownWebTestCase();
+
+        parent::tearDown();
+    }
 
     public function testCandidateCanBookCounselorSlot(): void
     {

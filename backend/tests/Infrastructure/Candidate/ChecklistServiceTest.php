@@ -17,6 +17,13 @@ final class ChecklistServiceTest extends KernelTestCase
 {
     use DatabaseTestTrait;
 
+    protected function tearDown(): void
+    {
+        self::ensureKernelShutdown();
+
+        parent::tearDown();
+    }
+
     public function testProgressIncreasesWhenDocumentValidated(): void
     {
         self::bootKernel();
