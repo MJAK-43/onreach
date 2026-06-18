@@ -1,0 +1,41 @@
+name: Reusable Preflight
+
+on:
+  workflow_call:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Reject CRLF in shell scripts
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r -d '' file; do
+            if grep -q $'\r' "$file"; then
+              echo "::error file=$file::CRLF line endings detected (use LF — see .gitattributes)"
+              found=1
+            fi
+          done < <(find deployments backend/docker -name '*.sh' -print0 2>/dev/null || true)
+          if [ "$found" -ne 0 ]; then
+            exit 1
+          fi
+          echo "All shell scripts use LF line endings."
+
+      - name: Validate shell script syntax
+        run: |
+          set -euo pipefail
+          for file in deployments/scripts/*.sh backend/docker/entrypoint.sh; do
+            [ -f "$file" ] || continue
+            bash -n "$file"
+            echo "OK: $file"
+          done
+
+      - name: Verify .gitattributes covers shell scripts
+        run: |
+          grep -q '\*.sh text eol=lf' .gitattributes || {
+            echo "::error::.gitattributes must enforce LF for *.sh files"
+            exit 1
+          }

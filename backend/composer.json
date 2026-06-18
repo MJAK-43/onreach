@@ -75,6 +75,9 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
+        "deploy-install": [
+            "composer install --no-interaction --ignore-platform-reqs --optimize-autoloader --no-scripts"
+        ],
         "test": "php bin/phpunit",
         "phpstan": "phpstan analyse --no-progress --memory-limit=512M",
         "cs-fix": "php-cs-fixer fix",

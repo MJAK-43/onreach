@@ -9,7 +9,8 @@ elif [ ! -f vendor/composer/installed.json ] || [ composer.lock -nt vendor/compo
 fi
 
 if [ "$needs_composer_install" = true ]; then
-    composer install --no-interaction --ignore-platform-reqs --optimize-autoloader
+    # --no-scripts: cache/migrations gérés ci-dessous (évite course avec deploy-dev.sh).
+    composer install --no-interaction --ignore-platform-reqs --optimize-autoloader --no-scripts
 fi
 
 if [ ! -f .env ]; then

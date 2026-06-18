@@ -17,10 +17,10 @@ echo "Syncing Composer dependencies (vendor volume may be stale after deploy)...
 mkdir -p "${APP_DIR}/backend/var/cache" "${APP_DIR}/backend/var/log"
 chmod -R 777 "${APP_DIR}/backend/var"
 
-# Avoid cache:clear race between composer post-install scripts and the running backend entrypoint.
+# Stop backend before composer to avoid Symfony cache race (entrypoint vs post-install scripts).
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop backend || true
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" run --rm --no-deps backend \
-  sh -c 'rm -rf var/cache/* && composer install --no-interaction --ignore-platform-reqs --optimize-autoloader --no-scripts'
+  sh -c 'rm -rf var/cache/* && composer run-script deploy-install --no-interaction'
 
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d backend backend-nginx
 

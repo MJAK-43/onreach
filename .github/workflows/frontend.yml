@@ -3,48 +3,24 @@ name: Frontend CI
 on:
   workflow_dispatch:
   push:
-    branches: [main, preprod, develop, 'feature/**']
+    branches: [main, preprod, 'feature/**']
     paths:
       - 'frontend/**'
+      - 'deployments/**'
+      - '.gitattributes'
       - '.github/workflows/frontend.yml'
+      - '.github/workflows/reusable-frontend-quality.yml'
+      - '.github/workflows/reusable-preflight.yml'
   pull_request:
     branches: [main, preprod, develop]
     paths:
       - 'frontend/**'
+      - 'deployments/**'
 
 jobs:
+  preflight:
+    uses: ./.github/workflows/reusable-preflight.yml
+
   quality:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: ESLint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Vitest
-        run: npm run test
-
-      - name: Build
-        run: npm run build
-        env:
-          VITE_API_URL: http://api.localhost
-
-      - name: npm audit
-        run: npm audit --audit-level=high
+    needs: preflight
+    uses: ./.github/workflows/reusable-frontend-quality.yml

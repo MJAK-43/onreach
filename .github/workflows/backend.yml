@@ -3,99 +3,25 @@ name: Backend CI
 on:
   workflow_dispatch:
   push:
-    branches: [main, preprod, develop, 'feature/**']
+    branches: [main, preprod, 'feature/**']
     paths:
       - 'backend/**'
+      - 'deployments/**'
+      - '.gitattributes'
       - '.github/workflows/backend.yml'
+      - '.github/workflows/reusable-backend-quality.yml'
+      - '.github/workflows/reusable-preflight.yml'
   pull_request:
     branches: [main, preprod, develop]
     paths:
       - 'backend/**'
+      - 'deployments/**'
+      - '.gitattributes'
 
 jobs:
+  preflight:
+    uses: ./.github/workflows/reusable-preflight.yml
+
   quality:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_DB: onreach_test
-          POSTGRES_USER: onreach
-          POSTGRES_PASSWORD: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U onreach"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: pdo_pgsql, redis, intl, zip
-          coverage: none
-
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Prepare test environment file
-        run: cp .env.test .env
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Composer validate
-        run: composer validate --strict
-
-      - name: Generate JWT keys
-        run: |
-          mkdir -p config/jwt
-          openssl genrsa -passout pass:test -out config/jwt/private.pem 4096
-          openssl rsa -pubout -in config/jwt/private.pem -passin pass:test -out config/jwt/public.pem
-        env:
-          JWT_PASSPHRASE: test
-
-      - name: PHP CS Fixer (dry-run)
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
-
-      - name: PHPStan
-        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
-
-      - name: PHPUnit
-        run: php bin/phpunit
-        env:
-          APP_ENV: test
-          APP_SECRET: test_secret_for_ci
-          DATABASE_URL: postgresql://onreach:test@localhost:5432/onreach_test?serverVersion=16&charset=utf8
-          REDIS_URL: redis://localhost:6379
-          JWT_PASSPHRASE: test
-          JWT_SECRET_KEY: '%kernel.project_dir%/config/jwt/private.pem'
-          JWT_PUBLIC_KEY: '%kernel.project_dir%/config/jwt/public.pem'
-          DEFAULT_URI: http://localhost
-          MAILER_DSN: "null://null"
-          MAILER_FROM: noreply@onreach.test
-          FRONTEND_URL: http://localhost:5173
-
-      - name: Composer audit
-        run: composer audit
+    needs: preflight
+    uses: ./.github/workflows/reusable-backend-quality.yml

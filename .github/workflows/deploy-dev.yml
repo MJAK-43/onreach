@@ -1,16 +1,35 @@
 name: Deploy DEV
 
+# Pipeline develop : preflight → qualité backend/frontend → déploiement serveur.
+# Le job deploy ne s'exécute que si tous les contrôles précédents réussissent.
+
 on:
   workflow_dispatch:
   push:
     branches: [develop]
 
+concurrency:
+  group: deploy-dev-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  preflight:
+    uses: ./.github/workflows/reusable-preflight.yml
+
+  backend-quality:
+    needs: preflight
+    uses: ./.github/workflows/reusable-backend-quality.yml
+
+  frontend-quality:
+    needs: preflight
+    uses: ./.github/workflows/reusable-frontend-quality.yml
+
   deploy:
-    if: github.ref == 'refs/heads/develop'
+    needs: [preflight, backend-quality, frontend-quality]
+    if: success()
     runs-on: ubuntu-latest
     environment: development
     permissions:
@@ -45,6 +64,7 @@ jobs:
           SSH_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           DEPLOY_ARCHIVE: ${{ env.DEPLOY_ARCHIVE }}
         run: |
+          set -euo pipefail
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
@@ -62,7 +82,7 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           command_timeout: 30m
           script: |
-            set -e
+            set -euo pipefail
             APP_DIR="/opt/onreach/app"
             mkdir -p "$APP_DIR"
             ARCHIVE="/tmp/onreach-deploy.tar.gz"
@@ -93,7 +113,7 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           command_timeout: 10m
           script: |
-            set -e
+            set -euo pipefail
             for i in $(seq 1 30); do
               API=$(curl -sf -o /dev/null -w "%{http_code}" https://api.onreach.inovixora.fr/health || echo "000")
               AI=$(curl -sf -o /dev/null -w "%{http_code}" https://ai.onreach.inovixora.fr/health || echo "000")

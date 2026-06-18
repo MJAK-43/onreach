@@ -5,3 +5,7 @@
 *.json text eol=lf
 *.md text eol=lf
 *.sh text eol=lf
+*.bash text eol=lf
+.editorconfig text eol=lf
+deployments/** text eol=lf
+backend/docker/** text eol=lf
