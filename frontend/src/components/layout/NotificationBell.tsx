@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/hooks/useNotifications'
+import { useDeferredNotifications, useMarkAllNotificationsRead, useMarkNotificationRead } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-  const { data, isLoading } = useNotifications()
+  const { data, isLoading } = useDeferredNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
   const unreadCount = data?.unreadCount ?? 0

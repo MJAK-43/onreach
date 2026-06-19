@@ -22,6 +22,12 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Kernel.php'
+            - '../src/Entity/'
+            - '../src/Repository/'
+
+    # Enregistrement explicite : le glob Repository peut échouer sur bind mount Windows/Docker.
+    App\Repository\:
+        resource: '../src/Repository/*Repository.php'
 
     App\Domain\Health\HealthRepositoryInterface:
         class: App\Infrastructure\Health\InMemoryHealthRepository

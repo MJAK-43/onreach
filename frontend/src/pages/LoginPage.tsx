@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
-import { ApiError, login } from '@/lib/api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ApiError, login, type CurrentUser } from '@/lib/api'
+import { fetchMyDashboard } from '@/lib/dashboard-api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,7 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } } | null)?.from
     ?.pathname ?? '/'
@@ -33,6 +35,17 @@ export function LoginPage() {
         setRequiresMfa(true)
         setError(null)
         return
+      }
+      if (data.user) {
+        queryClient.setQueryData<CurrentUser>(['currentUser'], {
+          ...data.user,
+          isActive: true,
+        })
+        void queryClient.prefetchQuery({
+          queryKey: ['my-dashboard'],
+          queryFn: fetchMyDashboard,
+          staleTime: 2 * 60_000,
+        })
       }
       navigate(from, { replace: true })
     },

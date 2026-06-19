@@ -23,18 +23,25 @@ final readonly class PathwaySerializer
      */
     public function serializeMany(array $pathways): array
     {
-        return array_map(fn (CandidatePathway $p) => $this->serializePathway($p), $pathways);
+        $settings = $this->settingRepository->findAllIndexedByCode();
+
+        return array_map(
+            fn (CandidatePathway $pathway) => $this->serializePathway($pathway, $settings),
+            $pathways,
+        );
     }
 
     /**
+     * @param array<string, \App\Entity\PathwaySetting> $settings
+     *
      * @return array<string, mixed>
      */
-    public function serializePathway(CandidatePathway $pathway): array
+    public function serializePathway(CandidatePathway $pathway, ?array $settings = null): array
     {
         $template = $pathway->getPathwayTemplate();
-        $doubleValidation = $this->settingRepository
-            ->findOneByPathwayCode($template->getCode())
-            ?->isDoubleValidationEnabled() ?? false;
+        $settings ??= $this->settingRepository->findAllIndexedByCode();
+        $code = $template->getCode()->value;
+        $doubleValidation = isset($settings[$code]) && $settings[$code]->isDoubleValidationEnabled();
 
         return [
             'id' => $pathway->getId()->toRfc4122(),

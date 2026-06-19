@@ -20,6 +20,6 @@ final class CandidatePathwayRepository extends ServiceEntityRepository
     /** @return list<CandidatePathway> */
     public function findByCandidate(Candidate $candidate): array
     {
-        return $this->findBy(['candidate' => $candidate]);
+        return $this->findBy(['candidate' => $candidate], ['createdAt' => 'ASC']);
     }
 }

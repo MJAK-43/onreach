@@ -15,7 +15,7 @@ export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (isLoading) {
+  if (isLoading && !user) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-sm text-muted-foreground">Chargement...</p>

@@ -56,6 +56,7 @@ class CandidateRepository extends ServiceEntityRepository
     public function findForCounselor(User $counselor, ?CandidateStatus $status = null): array
     {
         $qb = $this->createQueryBuilder('c')
+            ->leftJoin('c.assignedCounselor', 'counselor')->addSelect('counselor')
             ->where('c.assignedCounselor = :counselor')
             ->setParameter('counselor', $counselor)
             ->orderBy('c.updatedAt', 'DESC');
@@ -65,5 +66,28 @@ class CandidateRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    public function findOneByEmailWithCounselorAndDocuments(string $email): ?Candidate
+    {
+        return $this->createQueryBuilder('c')
+            ->leftJoin('c.assignedCounselor', 'counselor')->addSelect('counselor')
+            ->leftJoin('c.documents', 'd')->addSelect('d')
+            ->where('LOWER(c.email) = :email')
+            ->setParameter('email', strtolower($email))
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * @return list<Candidate>
+     */
+    public function findAllForList(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->leftJoin('c.assignedCounselor', 'counselor')->addSelect('counselor')
+            ->orderBy('c.updatedAt', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 }

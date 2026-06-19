@@ -32,6 +32,7 @@ use Symfony\Component\Uid\Uuid;
         new GetCollection(
             security: "is_granted('candidates.view')",
             provider: CandidateProvider::class,
+            normalizationContext: ['groups' => ['candidate:list']],
         ),
         new Get(
             security: "is_granted('candidates.view')",
@@ -62,19 +63,19 @@ class Candidate
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
-    #[Groups(['candidate:read'])]
+    #[Groups(['candidate:read', 'candidate:list'])]
     private Uuid $id;
 
     #[ORM\Column(name: 'reference_number', length: 30)]
-    #[Groups(['candidate:read'])]
+    #[Groups(['candidate:read', 'candidate:list'])]
     private string $referenceNumber;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private string $firstName;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private string $lastName;
 
     #[ORM\Column(length: 20, nullable: true)]
@@ -90,15 +91,15 @@ class Candidate
     private ?string $placeOfBirth = null;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private string $nationality;
 
     #[ORM\Column(length: 30, nullable: true)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private string $email;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -106,11 +107,11 @@ class Candidate
     private ?string $address = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private ?string $city = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private ?string $country = null;
 
     #[ORM\Column(length: 30, nullable: true)]
@@ -195,12 +196,12 @@ class Candidate
     private ?string $careerDescription = null;
 
     #[ORM\Column(enumType: CandidateStatus::class)]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private CandidateStatus $status;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
-    #[Groups(['candidate:read', 'candidate:write'])]
+    #[Groups(['candidate:read', 'candidate:write', 'candidate:list'])]
     private ?User $assignedCounselor = null;
 
     #[ORM\OneToOne(mappedBy: 'candidate', targetEntity: AcademicProfile::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -318,7 +319,7 @@ class Candidate
         return $this;
     }
 
-    #[Groups(['candidate:read'])]
+    #[Groups(['candidate:read', 'candidate:list'])]
     public function getFullName(): string
     {
         return trim($this->firstName.' '.$this->lastName);
@@ -607,13 +608,13 @@ class Candidate
         return $this;
     }
 
-    #[Groups(['candidate:read'])]
+    #[Groups(['candidate:read', 'candidate:list'])]
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    #[Groups(['candidate:read'])]
+    #[Groups(['candidate:read', 'candidate:list'])]
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
@@ -881,7 +882,6 @@ class Candidate
         return $this;
     }
 
-    #[Groups(['candidate:read'])]
     public function getCompletionPercent(): int
     {
         $sections = [

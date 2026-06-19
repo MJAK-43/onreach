@@ -10,6 +10,7 @@ export function useMyPathways() {
   return useQuery({
     queryKey: ['me-pathways'],
     queryFn: fetchMyPathways,
+    staleTime: 2 * 60_000,
   })
 }
 

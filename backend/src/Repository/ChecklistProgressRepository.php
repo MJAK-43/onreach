@@ -31,7 +31,14 @@ final class ChecklistProgressRepository extends ServiceEntityRepository
      */
     public function findIndexedForCandidate(\App\Entity\Candidate $candidate): array
     {
-        $rows = $this->findBy(['candidate' => $candidate]);
+        $rows = $this->createQueryBuilder('p')
+            ->addSelect('i')
+            ->join('p.checklistItem', 'i')
+            ->where('p.candidate = :candidate')
+            ->setParameter('candidate', $candidate)
+            ->getQuery()
+            ->getResult();
+
         $indexed = [];
         foreach ($rows as $row) {
             $indexed[$row->getChecklistItem()->getId()->toRfc4122()] = $row;

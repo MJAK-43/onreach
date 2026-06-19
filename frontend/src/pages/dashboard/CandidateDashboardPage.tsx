@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
   Calendar,
   ClipboardList,
@@ -8,15 +7,10 @@ import {
   Mail,
   Wallet,
 } from 'lucide-react'
-import {
-  fetchCandidateCompletion,
-  fetchCandidateDocuments,
-  fetchCandidates,
-  type CounselorSummary,
-} from '@/lib/api'
-import { STATUS_LABELS } from '@/lib/candidate-utils'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useMyDashboard } from '@/hooks/useMyDashboard'
 import { CandidateProcedureTimeline } from '@/components/candidate/CandidateProcedureTimeline'
+import { STATUS_LABELS } from '@/lib/candidate-utils'
 import { Button } from '@/components/ui/button'
 
 const DOCUMENT_LABELS: Record<string, string> = {
@@ -47,14 +41,8 @@ const DEMO_TASKS = [
   { label: 'Prendre rendez-vous pour demande de visa', deadline: '15 Juin 2024', urgent: false },
 ]
 
-function counselorName(counselor: CounselorSummary | string | null | undefined): string {
-  if (!counselor || typeof counselor === 'string') return 'Marie Kouassi'
-  return `${counselor.firstName ?? ''} ${counselor.lastName ?? ''}`.trim() || 'Marie Kouassi'
-}
-
-function counselorInitials(name: string): string {
-  const parts = name.split(' ').filter(Boolean)
-  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('')
+function counselorInitials(firstName: string, lastName: string): string {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
 function globalStatusLabel(status: string): string {
@@ -70,52 +58,26 @@ function currentStepLabel(status: string): string {
 
 export function CandidateDashboardPage() {
   const { data: user } = useCurrentUser()
+  const { data: dashboard, isLoading, isError } = useMyDashboard()
 
-  const { data: candidates = [], isLoading } = useQuery({
-    queryKey: ['candidates'],
-    queryFn: fetchCandidates,
-  })
-
-  const dossier = candidates[0]
-
-  const completionQuery = useQuery({
-    queryKey: ['candidate-completion', dossier?.id],
-    queryFn: () => fetchCandidateCompletion(dossier!.id),
-    enabled: Boolean(dossier?.id),
-  })
-
-  const documentsQuery = useQuery({
-    queryKey: ['candidate-documents', dossier?.id],
-    queryFn: () => fetchCandidateDocuments(dossier!.id),
-    enabled: Boolean(dossier?.id),
-  })
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <p className="text-sm text-slate-500">Chargement de votre espace...</p>
-      </div>
-    )
-  }
-
-  const status = dossier?.status ?? 'admission_obtained'
-  const counselor = counselorName(dossier?.assignedCounselor)
-  const counselorEmail =
-    typeof dossier?.assignedCounselor === 'object' && dossier?.assignedCounselor?.email
-      ? dossier.assignedCounselor.email
-      : 'marie.kouassi@onreach.inovixora.fr'
+  const status = dashboard?.status ?? 'admission_obtained'
+  const counselor = dashboard?.counselor
+  const counselorName = counselor
+    ? `${counselor.firstName} ${counselor.lastName}`.trim()
+    : 'Marie Kouassi'
+  const counselorEmail = counselor?.email ?? 'marie.kouassi@onreach.inovixora.fr'
 
   const validatedTypes = new Set(
-    documentsQuery.data
-      ?.filter((d) => d.status === 'validated')
-      .map((d) => DOCUMENT_LABELS[d.type] ?? d.type) ?? [],
+    dashboard?.documents
+      .filter((document) => document.status === 'validated')
+      .map((document) => DOCUMENT_LABELS[document.type] ?? document.type) ?? [],
   )
   const displayDocs = DEMO_DOCUMENTS.map((name) => ({
     name,
     validated: validatedTypes.has(name) || validatedTypes.size === 0,
   }))
 
-  const checklistTasks = completionQuery.data?.checklist.items.filter((i) => !i.completed) ?? []
+  const checklistTasks = dashboard?.checklist.items.filter((item) => !item.completed) ?? []
   const tasks =
     checklistTasks.length > 0
       ? checklistTasks.slice(0, 3).map((item, idx) => ({
@@ -125,9 +87,18 @@ export function CandidateDashboardPage() {
         }))
       : DEMO_TASKS
 
+  if (isError) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <p className="text-sm text-red-600">Impossible de charger votre espace.</p>
+      </div>
+    )
+  }
+
+  const contentLoading = isLoading && !dashboard
+
   return (
     <div className="mx-auto max-w-[1400px] space-y-7">
-      {/* En-tête */}
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_minmax(280px,380px)] lg:gap-8">
         <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
@@ -138,16 +109,19 @@ export function CandidateDashboardPage() {
           </p>
         </div>
 
-        <Panel className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {contentLoading ? (
+          <div className="h-24 animate-pulse rounded-2xl bg-slate-200/70" />
+        ) : (
+          <Panel className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-pink-600 text-sm font-bold text-white shadow-sm">
-              {counselorInitials(counselor)}
+              {counselorInitials(counselor?.firstName ?? 'M', counselor?.lastName ?? 'K')}
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
                 Conseillère dédiée
               </p>
-              <p className="truncate font-semibold text-slate-900">{counselor}</p>
+              <p className="truncate font-semibold text-slate-900">{counselorName}</p>
               <p className="truncate text-xs text-slate-500">{counselorEmail}</p>
             </div>
           </div>
@@ -160,9 +134,25 @@ export function CandidateDashboardPage() {
             Message
           </Button>
         </Panel>
+        )}
       </div>
 
-      {/* KPIs */}
+      {contentLoading ? (
+        <div className="space-y-7 animate-pulse">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-28 rounded-2xl bg-slate-200/70" />
+            ))}
+          </div>
+          <div className="h-48 rounded-2xl bg-slate-200/70" />
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-40 rounded-2xl bg-slate-200/70" />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <KpiCard
           icon={<ClipboardList className="h-5 w-5 text-violet-600" />}
@@ -193,13 +183,12 @@ export function CandidateDashboardPage() {
         />
       </div>
 
-      {/* Timeline */}
       <Panel>
         <SectionTitle>Avancement de ma procédure</SectionTitle>
         <div className="mt-5">
           <CandidateProcedureTimeline status={status} />
         </div>
-        {(status === 'admission_obtained' || !dossier) && (
+        {status === 'admission_obtained' && (
           <div className="mt-5 flex flex-col gap-3 rounded-xl bg-orange-50/80 px-4 py-3.5 ring-1 ring-orange-100 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-relaxed text-orange-900">
               Votre admission a été enregistrée. Vous pouvez maintenant lancer votre demande de visa.
@@ -216,7 +205,6 @@ export function CandidateDashboardPage() {
         )}
       </Panel>
 
-      {/* Grille 2×2 — hauteur au contenu, pas d'étirement */}
       <div className="grid items-start gap-4 md:grid-cols-2 lg:gap-5">
         <Panel compact>
           <div className="mb-3 flex items-baseline justify-between gap-2">
@@ -311,7 +299,8 @@ export function CandidateDashboardPage() {
           </ul>
         </Panel>
       </div>
-
+        </>
+      )}
     </div>
   )
 }

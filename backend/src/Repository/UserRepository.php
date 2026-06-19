@@ -25,12 +25,23 @@ final class UserRepository extends ServiceEntityRepository implements UserProvid
 
     public function findByEmail(string $email): ?User
     {
-        return $this->findOneBy(['email' => strtolower($email)]);
+        return $this->findOneWithRolesAndPermissionsByEmail($email);
+    }
+
+    public function findOneWithRolesAndPermissionsByEmail(string $email): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->leftJoin('u.roles', 'r')->addSelect('r')
+            ->leftJoin('r.permissions', 'p')->addSelect('p')
+            ->where('u.email = :email')
+            ->setParameter('email', strtolower($email))
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
-        $user = $this->findByEmail($identifier);
+        $user = $this->findOneWithRolesAndPermissionsByEmail($identifier);
         if (!$user instanceof User) {
             throw new UserNotFoundException(sprintf('Utilisateur "%s" introuvable.', $identifier));
         }

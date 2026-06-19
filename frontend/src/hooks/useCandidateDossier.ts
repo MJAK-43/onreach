@@ -1,14 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
-import { fetchCandidates } from '@/lib/api'
+import { useMyDashboard } from '@/hooks/useMyDashboard'
 
 export function useCandidateDossier() {
-  const query = useQuery({
-    queryKey: ['candidates'],
-    queryFn: fetchCandidates,
-  })
+  const query = useMyDashboard()
 
   return {
     ...query,
-    dossier: query.data?.[0],
+    dossier: query.data
+      ? {
+          id: query.data.id,
+          status: query.data.status,
+        }
+      : undefined,
   }
 }

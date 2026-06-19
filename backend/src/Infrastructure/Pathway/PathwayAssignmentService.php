@@ -150,16 +150,10 @@ final readonly class PathwayAssignmentService
 
     private function findTemplateForCampaign(Campaign $campaign, \App\Domain\Pathway\Enum\PathwayCode $code): ?PathwayTemplate
     {
-        $template = $this->pathwayTemplateRepository->createQueryBuilder('pt')
-            ->innerJoin('pt.stages', 's')->addSelect('s')
-            ->innerJoin('s.subSteps', 'ss')->addSelect('ss')
-            ->where('IDENTITY(pt.campaign) = :campaignId')
-            ->andWhere('pt.code = :code')
-            ->setParameter('campaignId', $campaign->getId(), 'uuid')
-            ->setParameter('code', $code)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+        $template = $this->pathwayTemplateRepository->findOneBy([
+            'campaign' => $campaign,
+            'code' => $code,
+        ]);
 
         return $template instanceof PathwayTemplate ? $template : null;
     }

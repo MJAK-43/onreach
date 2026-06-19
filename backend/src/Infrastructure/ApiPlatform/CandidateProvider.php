@@ -52,7 +52,7 @@ final readonly class CandidateProvider implements ProviderInterface
         }
 
         if ($user->hasRole('SUPER_ADMIN') || $user->hasRole('ADMIN')) {
-            return $this->candidateRepository->findBy([], ['updatedAt' => 'DESC']);
+            return $this->candidateRepository->findAllForList();
         }
 
         if ($user->hasRole('COUNSELOR')) {
@@ -60,7 +60,7 @@ final readonly class CandidateProvider implements ProviderInterface
         }
 
         if ($user->hasRole('CANDIDATE')) {
-            $own = $this->candidateRepository->findOneBy(['email' => $user->getEmail()]);
+            $own = $this->candidateRepository->findOneByEmailWithCounselorAndDocuments($user->getEmail());
 
             return $own instanceof Candidate ? [$own] : [];
         }

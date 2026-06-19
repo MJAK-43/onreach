@@ -6,8 +6,8 @@ namespace App\Presentation\Controller;
 
 use App\Entity\User;
 use App\Infrastructure\Candidate\CandidateResolver;
-use App\Infrastructure\Pathway\PathwayAssignmentService;
 use App\Infrastructure\Pathway\PathwaySerializer;
+use App\Repository\CandidatePathwayRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,7 +18,7 @@ final class MePathwaysController extends AbstractController
 {
     public function __construct(
         private readonly CandidateResolver $candidateResolver,
-        private readonly PathwayAssignmentService $assignmentService,
+        private readonly CandidatePathwayRepository $candidatePathwayRepository,
         private readonly PathwaySerializer $serializer,
     ) {
     }
@@ -28,7 +28,7 @@ final class MePathwaysController extends AbstractController
     public function list(): JsonResponse
     {
         $candidate = $this->resolveCandidate();
-        $pathways = $this->assignmentService->listForCandidate($candidate);
+        $pathways = $this->candidatePathwayRepository->findByCandidate($candidate);
 
         return new JsonResponse([
             'studyApplicationType' => $candidate->getStudyApplicationType()?->value,

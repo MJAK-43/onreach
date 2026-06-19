@@ -23,7 +23,7 @@ final readonly class CandidateResolver
             throw new AccessDeniedException('Réservé aux candidats.');
         }
 
-        $candidate = $this->candidateRepository->findOneBy(['email' => strtolower($user->getEmail())]);
+        $candidate = $this->candidateRepository->findOneByEmailWithCounselorAndDocuments($user->getEmail());
         if (!$candidate instanceof Candidate) {
             throw new NotFoundHttpException('Aucun dossier candidat associé à ce compte.');
         }
