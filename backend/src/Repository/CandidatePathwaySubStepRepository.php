@@ -30,4 +30,29 @@ final class CandidatePathwaySubStepRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * @return list<CandidatePathwaySubStep>
+     */
+    public function findDueForReminder(\DateTimeImmutable $until): array
+    {
+        $today = new \DateTimeImmutable('today');
+
+        return $this->createQueryBuilder('ss')
+            ->innerJoin('ss.candidateStage', 's')
+            ->innerJoin('s.candidatePathway', 'cp')
+            ->innerJoin('cp.candidate', 'c')
+            ->innerJoin('ss.subStepTemplate', 'sst')->addSelect('sst')
+            ->innerJoin('cp.pathwayTemplate', 'pt')->addSelect('pt')
+            ->leftJoin('c.assignedCounselor', 'counselor')->addSelect('counselor')
+            ->andWhere('ss.dueDate IS NOT NULL')
+            ->andWhere('ss.dueDate <= :until')
+            ->andWhere('ss.dueReminderSentAt IS NULL')
+            ->andWhere('ss.counselorValidatedAt IS NULL')
+            ->andWhere('ss.adminValidatedAt IS NULL')
+            ->setParameter('until', $until)
+            ->orderBy('ss.dueDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

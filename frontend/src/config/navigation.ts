@@ -62,11 +62,10 @@ export const counselorNavSections: NavSectionConfig[] = [
     items: [
       { to: '/candidates', label: 'Mes candidats', icon: Users, permission: 'candidates.view' },
       {
-        to: '#',
+        to: '/pathways/tracking',
         label: 'Suivi des candidatures',
         icon: CalendarCheck,
-        disabled: true,
-        permission: 'candidates.view',
+        permission: 'applications.view',
       },
       { to: '/housing', label: 'Recherche de logement', icon: Home },
       { to: '/payments', label: 'Paiements', icon: Briefcase },

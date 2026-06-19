@@ -61,9 +61,23 @@ class Campaign
         return $this->name;
     }
 
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
     public function getYear(): int
     {
         return $this->year;
+    }
+
+    public function setYear(int $year): self
+    {
+        $this->year = $year;
+
+        return $this;
     }
 
     public function getStartDate(): \DateTimeImmutable
@@ -71,9 +85,23 @@ class Campaign
         return $this->startDate;
     }
 
+    public function setStartDate(\DateTimeImmutable $startDate): self
+    {
+        $this->startDate = $startDate;
+
+        return $this;
+    }
+
     public function getEndDate(): \DateTimeImmutable
     {
         return $this->endDate;
+    }
+
+    public function setEndDate(\DateTimeImmutable $endDate): self
+    {
+        $this->endDate = $endDate;
+
+        return $this;
     }
 
     public function isActive(): bool

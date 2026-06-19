@@ -11,7 +11,9 @@ use App\Infrastructure\ApiPlatform\CandidateProvider;
 use App\Infrastructure\Pathway\PathwayAssignmentService;
 use App\Infrastructure\Pathway\PathwayAuditSerializer;
 use App\Infrastructure\Pathway\PathwaySerializer;
+use App\Infrastructure\Pathway\PathwayStatusService;
 use App\Infrastructure\Pathway\PathwaySubStepService;
+use App\Repository\CandidatePathwayRepository;
 use App\Repository\CandidatePathwaySubStepRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,6 +33,8 @@ final class CandidatePathwayController extends AbstractController
         private readonly PathwaySerializer $serializer,
         private readonly PathwaySubStepService $subStepService,
         private readonly CandidatePathwaySubStepRepository $subStepRepository,
+        private readonly CandidatePathwayRepository $pathwayRepository,
+        private readonly PathwayStatusService $statusService,
         private readonly PathwayAuditSerializer $auditSerializer,
     ) {
     }
@@ -81,6 +85,37 @@ final class CandidatePathwayController extends AbstractController
 
         return new JsonResponse([
             'pathway' => $this->serializer->serializePathway($pathway),
+        ]);
+    }
+
+    #[Route('/{id}/pathways/{pathwayId}', name: 'candidate_pathway_patch', methods: ['PATCH'])]
+    #[IsGranted('applications.edit')]
+    public function patchPathway(string $id, string $pathwayId, Request $request): JsonResponse
+    {
+        $candidate = $this->loadCandidate($id);
+        $payload = json_decode($request->getContent(), true);
+        if (!\is_array($payload)) {
+            throw new BadRequestHttpException('JSON invalide.');
+        }
+
+        if (!Uuid::isValid($pathwayId)) {
+            throw new NotFoundHttpException('Parcours introuvable.');
+        }
+
+        $pathway = $this->pathwayRepository->findOneForCandidate($candidate, Uuid::fromString($pathwayId));
+        if (!$pathway) {
+            throw new NotFoundHttpException('Parcours introuvable.');
+        }
+
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $updated = $this->statusService->updateStatus($candidate, $pathway, $payload, $user);
+
+        return new JsonResponse([
+            'pathway' => $this->serializer->serializePathway($updated),
         ]);
     }
 

@@ -12,7 +12,7 @@ framework:
             sync: 'sync://'
 
         routing:
-            # 'App\Application\Message\ExampleMessage': async
+            App\Application\Message\PathwayDueDateReminderMessage: async
 
 when@test:
     framework:

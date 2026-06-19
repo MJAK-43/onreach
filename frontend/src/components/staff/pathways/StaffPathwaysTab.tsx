@@ -12,6 +12,7 @@ import { PermissionGate } from '@/components/auth/PermissionGate'
 import { StudyTypeBanner } from '@/components/candidate/demarches/PathwayComponents'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Card,
   CardContent,
@@ -23,6 +24,7 @@ import { Progress } from '@/components/ui/progress'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import {
   useCandidatePathways,
+  usePatchCandidatePathway,
   usePatchCandidatePathwaySubStep,
 } from '@/hooks/useCandidatePathways'
 import type { Pathway, PathwayStage, PathwaySubStep } from '@/lib/pathways-api'
@@ -297,6 +299,61 @@ function StaffStageBlock({
   )
 }
 
+function PathwayStatusControls({
+  pathway,
+  candidateId,
+}: {
+  pathway: Pathway
+  candidateId: string
+}) {
+  const statusMutation = usePatchCandidatePathway(candidateId)
+  const [reason, setReason] = useState(pathway.blockedReason ?? '')
+
+  return (
+    <PermissionGate permission="applications.edit">
+      <div className="rounded-xl border border-border p-4">
+        <p className="text-sm font-medium">Statut du parcours</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {pathway.status !== 'in_progress' && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={statusMutation.isPending}
+              onClick={() => statusMutation.mutate({ pathwayId: pathway.id, payload: { status: 'in_progress' } })}
+            >
+              Reprendre
+            </Button>
+          )}
+          {pathway.status !== 'blocked' && (
+            <>
+              <Input
+                placeholder="Motif de blocage (obligatoire)"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                className="max-w-md"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-50"
+                disabled={statusMutation.isPending || reason.trim() === ''}
+                onClick={() =>
+                  statusMutation.mutate({
+                    pathwayId: pathway.id,
+                    payload: { status: 'blocked', blockedReason: reason.trim() },
+                  })
+                }
+              >
+                Bloquer
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </PermissionGate>
+  )
+}
+
 function StaffPathwayPanel({ pathway, candidateId }: { pathway: Pathway; candidateId: string }) {
   const patchMutation = usePatchCandidatePathwaySubStep(candidateId)
   const { data: user } = useCurrentUser()
@@ -339,6 +396,7 @@ function StaffPathwayPanel({ pathway, candidateId }: { pathway: Pathway; candida
   return (
     <div className="space-y-4">
       <StaffPathwaySummary pathway={pathway} />
+      <PathwayStatusControls pathway={pathway} candidateId={candidateId} />
       <div className="space-y-3">
         {pathway.stages.map((stage, index) => (
           <StaffStageBlock

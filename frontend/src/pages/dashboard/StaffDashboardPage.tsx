@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { GraduationCap, Plane, Trophy, Users } from 'lucide-react'
 import { fetchCandidates } from '@/lib/api'
+import { fetchPathwayStats } from '@/lib/pathway-tracking-api'
 import { computeCandidateStats } from '@/lib/candidate-utils'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getPrimaryRole } from '@/lib/roles'
@@ -22,6 +23,11 @@ export function StaffDashboardPage() {
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ['candidates'],
     queryFn: fetchCandidates,
+  })
+
+  const { data: pathwayStats } = useQuery({
+    queryKey: ['pathway-stats'],
+    queryFn: fetchPathwayStats,
   })
 
   const stats = computeCandidateStats(candidates)
@@ -74,6 +80,29 @@ export function StaffDashboardPage() {
         />
       </div>
 
+      {pathwayStats && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <KpiCard
+            label="Parcours actifs"
+            value={pathwayStats.totalPathways}
+            hint="Instances parcours suivies"
+            icon={GraduationCap}
+          />
+          <KpiCard
+            label="Parcours bloqués"
+            value={pathwayStats.blockedCount}
+            accent="text-red-600"
+            icon={Users}
+          />
+          <KpiCard
+            label="Échéances dépassées"
+            value={pathwayStats.overdueCount}
+            accent="text-orange-600"
+            icon={Plane}
+          />
+        </div>
+      )}
+
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -82,7 +111,7 @@ export function StaffDashboardPage() {
               <CardDescription>Derniers dossiers mis à jour</CardDescription>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/candidates">Voir tout</Link>
+              <Link to="/pathways/tracking">Voir tout</Link>
             </Button>
           </CardHeader>
           <CardContent>

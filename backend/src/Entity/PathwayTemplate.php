@@ -83,6 +83,13 @@ class PathwayTemplate
         return $this->name;
     }
 
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
     /** @return list<StudyApplicationType> */
     public function getEligibleStudyTypes(): array
     {

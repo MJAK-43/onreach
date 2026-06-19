@@ -74,9 +74,23 @@ class PathwaySubStepTemplate
         return $this->title;
     }
 
+    public function setTitle(string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
     }
 
     public function isRequired(): bool
@@ -84,9 +98,23 @@ class PathwaySubStepTemplate
         return $this->required;
     }
 
+    public function setRequired(bool $required): self
+    {
+        $this->required = $required;
+
+        return $this;
+    }
+
     public function getDefaultDueOffsetDays(): ?int
     {
         return $this->defaultDueOffsetDays;
+    }
+
+    public function setDefaultDueOffsetDays(?int $defaultDueOffsetDays): self
+    {
+        $this->defaultDueOffsetDays = $defaultDueOffsetDays;
+
+        return $this;
     }
 
     public function getSortOrder(): int

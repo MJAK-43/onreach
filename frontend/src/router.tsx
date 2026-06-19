@@ -43,6 +43,7 @@ import { CounselorAvailabilityPage } from '@/pages/CounselorAvailabilityPage'
 import { CounselorsPage } from '@/pages/admin/CounselorsPage'
 import { MatchingPage } from '@/pages/admin/MatchingPage'
 import { PathwaySettingsPage } from '@/pages/admin/PathwaySettingsPage'
+import { PathwayTrackingPage } from '@/pages/staff/PathwayTrackingPage'
 import { ReportsPage } from '@/pages/admin/ReportsPage'
 import { DemarchesLayout } from '@/components/candidate/demarches/DemarchesLayout'
 import { CampusFrancePage } from '@/pages/candidate/demarches/CampusFrancePage'
@@ -123,6 +124,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute permission="candidates.view">
             <CandidatesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pathways/tracking',
+        element: (
+          <ProtectedRoute permission="applications.view">
+            <PathwayTrackingPage />
           </ProtectedRoute>
         ),
       },

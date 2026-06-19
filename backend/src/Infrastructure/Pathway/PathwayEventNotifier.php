@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Pathway;
 
+use App\Domain\Pathway\Enum\PathwayInstanceStatus;
 use App\Entity\Candidate;
 use App\Entity\CandidatePathway;
 use App\Entity\CandidatePathwaySubStep;
@@ -90,6 +91,94 @@ final readonly class PathwayEventNotifier
                 'Validation en cours',
                 sprintf('%s — %s : en attente de validation administrateur', $pathwayName, $subStepTitle),
                 rtrim($this->frontendUrl, '/').'/demarches',
+            );
+        }
+    }
+
+    public function notifyPathwayStatusUpdated(
+        Candidate $candidate,
+        CandidatePathway $pathway,
+        User $actor,
+        PathwayInstanceStatus $previousStatus,
+    ): void {
+        if ($previousStatus === $pathway->getStatus()) {
+            return;
+        }
+
+        $candidateUser = $this->userRepository->findByEmail($candidate->getEmail());
+        $pathwayName = $pathway->getPathwayTemplate()->getName();
+        $message = sprintf(
+            '%s — statut : %s',
+            $pathwayName,
+            $pathway->getStatus()->label(),
+        );
+
+        if (PathwayInstanceStatus::BLOCKED === $pathway->getStatus() && $pathway->getBlockedReason()) {
+            $message .= sprintf(' (%s)', $pathway->getBlockedReason());
+        }
+
+        if ($candidateUser) {
+            $this->notificationService->notify(
+                $candidateUser,
+                'pathway.status_updated',
+                'Statut parcours mis à jour',
+                $message,
+                rtrim($this->frontendUrl, '/').'/demarches',
+                [
+                    'pathwayId' => $pathway->getId()->toRfc4122(),
+                    'status' => $pathway->getStatus()->value,
+                ],
+            );
+        }
+
+        $counselor = $candidate->getAssignedCounselor();
+        if ($counselor && $counselor->getId()->toRfc4122() !== $actor->getId()->toRfc4122()) {
+            $this->notificationService->notify(
+                $counselor,
+                'pathway.status_updated',
+                'Statut parcours mis à jour',
+                sprintf(
+                    '%s — %s',
+                    trim($candidate->getFirstName().' '.$candidate->getLastName()),
+                    $message,
+                ),
+                sprintf('%s/candidates/%s', rtrim($this->frontendUrl, '/'), $candidate->getId()->toRfc4122()),
+            );
+        }
+    }
+
+    public function notifyDueDateReminder(CandidatePathwaySubStep $subStep): void
+    {
+        $pathway = $subStep->getCandidateStage()->getCandidatePathway();
+        $candidate = $pathway->getCandidate();
+        $pathwayName = $pathway->getPathwayTemplate()->getName();
+        $subStepTitle = $subStep->getSubStepTemplate()->getTitle();
+        $dueDate = $subStep->getDueDate();
+        $dueLabel = $dueDate?->format('d/m/Y') ?? '';
+        $isOverdue = $dueDate && $dueDate < new \DateTimeImmutable('today');
+        $title = $isOverdue ? 'Échéance dépassée' : 'Échéance proche';
+        $body = sprintf('%s — %s (%s)', $pathwayName, $subStepTitle, $dueLabel);
+
+        $candidateUser = $this->userRepository->findByEmail($candidate->getEmail());
+        if ($candidateUser) {
+            $this->notificationService->notify(
+                $candidateUser,
+                'pathway.due_date_reminder',
+                $title,
+                $body,
+                rtrim($this->frontendUrl, '/').'/demarches',
+                ['subStepId' => $subStep->getId()->toRfc4122()],
+            );
+        }
+
+        $counselor = $candidate->getAssignedCounselor();
+        if ($counselor) {
+            $this->notificationService->notify(
+                $counselor,
+                'pathway.due_date_reminder',
+                $title,
+                sprintf('%s — %s', trim($candidate->getFirstName().' '.$candidate->getLastName()), $body),
+                sprintf('%s/candidates/%s', rtrim($this->frontendUrl, '/'), $candidate->getId()->toRfc4122()),
             );
         }
     }

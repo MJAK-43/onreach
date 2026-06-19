@@ -105,6 +105,23 @@ export async function patchCandidatePathwaySubStep(
   )
 }
 
+export interface PatchPathwayPayload {
+  status?: string
+  blockedReason?: string | null
+}
+
+export async function patchCandidatePathway(
+  candidateId: string,
+  pathwayId: string,
+  payload: PatchPathwayPayload,
+): Promise<PatchSubStepResponse> {
+  return apiRequest<PatchSubStepResponse>(`/api/candidates/${candidateId}/pathways/${pathwayId}`, {
+    method: 'PATCH',
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  })
+}
+
 export function findPathwayByCode(pathways: Pathway[], code: PathwayCode): Pathway | undefined {
   return pathways.find((p) => p.code === code)
 }

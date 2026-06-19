@@ -9,7 +9,9 @@ import {
   TimelineList,
 } from '@/components/candidate/demarches/DemarchesComponents'
 import { PathwayHero, PathwayStageTimeline } from '@/components/candidate/demarches/PathwayComponents'
+import { CandidateMessagesPanel } from '@/components/candidate/demarches/CandidateMessagesPanel'
 import { usePathway } from '@/hooks/useMyPathways'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { fetchMyCampusFrance } from '@/lib/demarches-api'
 
 const TABS = [
@@ -22,6 +24,7 @@ const TABS = [
 
 export function CampusFrancePage() {
   const [tab, setTab] = useState('steps')
+  const { data: user } = useCurrentUser()
   const { pathway, isLoading: pathwaysLoading, isError: pathwaysError } = usePathway('campus_france')
   const legacyQuery = useQuery({
     queryKey: ['me-campus-france'],
@@ -103,10 +106,10 @@ export function CampusFrancePage() {
 
       {tab === 'messages' && (
         <CandidatePanel>
-          <CandidateSectionTitle>Messages</CandidateSectionTitle>
-          <p className="mt-3 text-sm text-slate-500">
-            Lecture seule — la messagerie avec votre conseiller sera bientôt disponible.
-          </p>
+          <CandidateSectionTitle>Messages avec votre conseiller</CandidateSectionTitle>
+          <div className="mt-4">
+            <CandidateMessagesPanel currentUserId={user?.id} />
+          </div>
         </CandidatePanel>
       )}
     </div>

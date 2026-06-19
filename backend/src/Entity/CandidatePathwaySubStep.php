@@ -31,6 +31,9 @@ class CandidatePathwaySubStep
     private ?\DateTimeImmutable $dueDate = null;
 
     #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $dueReminderSentAt = null;
+
+    #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $counselorValidatedAt = null;
 
     #[ORM\ManyToOne]
@@ -91,6 +94,19 @@ class CandidatePathwaySubStep
     public function getDueDate(): ?\DateTimeImmutable
     {
         return $this->dueDate;
+    }
+
+    public function getDueReminderSentAt(): ?\DateTimeImmutable
+    {
+        return $this->dueReminderSentAt;
+    }
+
+    public function markDueReminderSent(): self
+    {
+        $this->dueReminderSentAt = new \DateTimeImmutable();
+        $this->touch();
+
+        return $this;
     }
 
     public function getCounselorValidatedAt(): ?\DateTimeImmutable
