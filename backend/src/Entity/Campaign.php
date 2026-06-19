@@ -81,6 +81,11 @@ class Campaign
         return $this->active;
     }
 
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
     public function setActive(bool $active): self
     {
         $this->active = $active;

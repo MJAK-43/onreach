@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Infrastructure\Pathway;
 
 use App\Domain\Pathway\Enum\StudyApplicationType;
+use App\Entity\Campaign;
 use App\Entity\Candidate;
 use App\Entity\CandidatePathway;
 use App\Entity\CandidatePathwayStage;
 use App\Entity\CandidatePathwaySubStep;
-use App\Entity\Campaign;
 use App\Entity\PathwayStageTemplate;
 use App\Entity\PathwaySubStepTemplate;
 use App\Entity\PathwayTemplate;
@@ -47,7 +47,7 @@ final readonly class PathwayAssignmentService
             return;
         }
 
-        if ($previousType instanceof StudyApplicationType && $previousType !== $studyType) {
+        if ($previousType instanceof StudyApplicationType) {
             $this->removePathwaysForCandidate($candidate);
         }
 

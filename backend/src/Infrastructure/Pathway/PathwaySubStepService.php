@@ -51,14 +51,17 @@ final readonly class PathwaySubStepService
 
         if (isset($payload['validated'])) {
             if ((bool) $payload['validated']) {
+                $canValidate = $actor->hasRole('COUNSELOR')
+                    || $actor->hasRole('ADMIN')
+                    || $actor->hasRole('SUPER_ADMIN');
+                if (!$canValidate) {
+                    throw new BadRequestHttpException('Validation non autorisée pour ce rôle.');
+                }
                 if ($isCounselor) {
                     $subStep->validateByCounselor($actor);
                 }
                 if ($isAdmin) {
                     $subStep->validateByAdmin($actor);
-                }
-                if (!$isCounselor && !$isAdmin) {
-                    throw new BadRequestHttpException('Validation non autorisée pour ce rôle.');
                 }
             } else {
                 $subStep->clearValidation();

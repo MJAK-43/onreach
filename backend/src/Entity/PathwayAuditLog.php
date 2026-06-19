@@ -31,6 +31,7 @@ class PathwayAuditLog
     #[ORM\Column(length: 80)]
     private string $action;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $payload = null;
 
@@ -41,6 +42,9 @@ class PathwayAuditLog
     #[ORM\Column]
     private \DateTimeImmutable $occurredAt;
 
+    /**
+     * @param array<string, mixed>|null $payload
+     */
     public function __construct(
         Candidate $candidate,
         string $action,
@@ -74,6 +78,7 @@ class PathwayAuditLog
         return $this->action;
     }
 
+    /** @return array<string, mixed>|null */
     public function getPayload(): ?array
     {
         return $this->payload;

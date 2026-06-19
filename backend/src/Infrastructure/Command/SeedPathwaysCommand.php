@@ -72,7 +72,7 @@ final class SeedPathwaysCommand extends Command
 
     /**
      * @param array{
-     *     code: \App\Domain\Pathway\Enum\PathwayCode,
+     *     code: PathwayCode,
      *     name: string,
      *     eligibleStudyTypes: list<\App\Domain\Pathway\Enum\StudyApplicationType>,
      *     stages: list<array{

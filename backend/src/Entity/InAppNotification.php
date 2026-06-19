@@ -33,6 +33,7 @@ class InAppNotification
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $linkUrl;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $metadata;
 
@@ -93,6 +94,7 @@ class InAppNotification
         return $this->linkUrl;
     }
 
+    /** @return array<string, mixed>|null */
     public function getMetadata(): ?array
     {
         return $this->metadata;

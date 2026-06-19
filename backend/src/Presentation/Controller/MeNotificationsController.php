@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
-use App\Domain\Pathway\Enum\PathwayCode;
 use App\Entity\User;
 use App\Infrastructure\Notification\InAppNotificationService;
 use App\Repository\InAppNotificationRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
@@ -21,6 +20,7 @@ final class MeNotificationsController extends AbstractController
     public function __construct(
         private readonly InAppNotificationService $notificationService,
         private readonly InAppNotificationRepository $notificationRepository,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -51,7 +51,7 @@ final class MeNotificationsController extends AbstractController
     {
         $user = $this->requireUser();
         $count = $this->notificationService->markAllAsRead($user);
-        $this->notificationRepository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         return new JsonResponse(['marked' => $count]);
     }
@@ -70,7 +70,7 @@ final class MeNotificationsController extends AbstractController
         }
 
         $this->notificationService->markAsRead($notification, $user);
-        $this->notificationRepository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         return new JsonResponse(['read' => true]);
     }

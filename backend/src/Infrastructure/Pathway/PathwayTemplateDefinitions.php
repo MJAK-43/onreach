@@ -10,19 +10,23 @@ use App\Domain\Pathway\Enum\StudyApplicationType;
 /**
  * Définitions des parcours préchargés (campagne 2026).
  *
- * @return list<array{
+ * @phpstan-type PathwayStageDefinition array{
+ *     title: string,
+ *     description: string|null,
+ *     subSteps: list<array{title: string, description: string|null, required: bool, dueOffsetDays: int|null}>
+ * }
+ * @phpstan-type PathwayDefinition array{
  *     code: PathwayCode,
  *     name: string,
  *     eligibleStudyTypes: list<StudyApplicationType>,
- *     stages: list<array{
- *         title: string,
- *         description: string|null,
- *         subSteps: list<array{title: string, description: string|null, required: bool, dueOffsetDays: int|null}>
- *     }>
- * }>
+ *     stages: list<PathwayStageDefinition>
+ * }
  */
 final class PathwayTemplateDefinitions
 {
+    /**
+     * @return list<PathwayDefinition>
+     */
     public static function all(): array
     {
         return [
@@ -43,6 +47,9 @@ final class PathwayTemplateDefinitions
         };
     }
 
+    /**
+     * @return PathwayDefinition
+     */
     private static function campusFrance(): array
     {
         return [
@@ -102,6 +109,9 @@ final class PathwayTemplateDefinitions
         ];
     }
 
+    /**
+     * @return PathwayDefinition
+     */
     private static function parcoursup(): array
     {
         return [
@@ -138,6 +148,9 @@ final class PathwayTemplateDefinitions
         ];
     }
 
+    /**
+     * @return PathwayDefinition
+     */
     private static function parisSaclay(): array
     {
         return [

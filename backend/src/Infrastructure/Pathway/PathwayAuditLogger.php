@@ -6,15 +6,9 @@ namespace App\Infrastructure\Pathway;
 
 use App\Entity\Candidate;
 use App\Entity\CandidatePathway;
-use App\Entity\CandidatePathwayStage;
 use App\Entity\CandidatePathwaySubStep;
 use App\Entity\PathwayAuditLog;
-use App\Entity\PathwayStageTemplate;
-use App\Entity\PathwaySubStepTemplate;
-use App\Entity\PathwayTemplate;
 use App\Entity\User;
-use App\Repository\CampaignRepository;
-use App\Repository\PathwayTemplateRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class PathwayAuditLogger
