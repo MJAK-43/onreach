@@ -25,10 +25,11 @@ final class PathwayTrackingController extends AbstractController
     #[IsGranted('applications.view')]
     public function listCandidates(Request $request): JsonResponse
     {
+        $campaignRaw = $request->query->get('campaign');
         $filters = [
             'pathway' => $request->query->get('pathway'),
             'status' => $request->query->get('status'),
-            'campaign' => $request->query->get('campaign'),
+            'campaign' => null !== $campaignRaw && '' !== $campaignRaw ? (int) $campaignRaw : null,
             'counselor' => $request->query->get('counselor'),
             'search' => $request->query->get('search'),
         ];

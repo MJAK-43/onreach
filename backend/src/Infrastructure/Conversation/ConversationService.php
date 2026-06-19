@@ -89,7 +89,7 @@ final readonly class ConversationService
      */
     public function startForCandidate(User $candidateUser, string $body): array
     {
-        $candidate = $this->candidateRepository->findOneByEmail($candidateUser->getEmail());
+        $candidate = $this->candidateRepository->findOneByEmailWithCounselorAndDocuments($candidateUser->getEmail());
         if (!$candidate instanceof Candidate) {
             throw new NotFoundHttpException('Candidat introuvable.');
         }

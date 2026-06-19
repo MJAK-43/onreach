@@ -82,7 +82,7 @@ final readonly class PathwayStatsService
         foreach ($byStatus as $code => $count) {
             $byStatusItems[] = [
                 'code' => $code,
-                'label' => $statusLabels[$code] ?? $code,
+                'label' => $statusLabels[$code],
                 'count' => $count,
             ];
         }
@@ -91,7 +91,7 @@ final readonly class PathwayStatsService
         foreach ($byPathway as $code => $count) {
             $byPathwayItems[] = [
                 'code' => $code,
-                'label' => $pathwayLabels[$code] ?? $code,
+                'label' => $pathwayLabels[$code],
                 'count' => $count,
             ];
         }

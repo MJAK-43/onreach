@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Pathway;
 
+use App\Entity\PathwaySubStepTemplate;
 use App\Entity\PathwayTemplate;
 use App\Repository\PathwayTemplateRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Uid\Uuid;
 

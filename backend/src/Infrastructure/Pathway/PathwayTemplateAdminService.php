@@ -140,7 +140,7 @@ final readonly class PathwayTemplateAdminService
     }
 
     /**
-     * @param array{name: string, year: int, startDate: string, endDate: string, cloneFromActive?: bool} $payload
+     * @param array{name?: string, year?: int, startDate?: string, endDate?: string, cloneFromActive?: bool} $payload
      *
      * @return array<string, mixed>
      */
