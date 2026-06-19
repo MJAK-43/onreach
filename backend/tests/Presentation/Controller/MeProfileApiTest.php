@@ -20,6 +20,7 @@ final class MeProfileApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $auth = $this->loginAsCandidate($client);

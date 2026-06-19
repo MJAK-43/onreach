@@ -42,6 +42,7 @@ import { CandidateProcedurePage } from '@/pages/candidate/CandidateProcedurePage
 import { CounselorAvailabilityPage } from '@/pages/CounselorAvailabilityPage'
 import { CounselorsPage } from '@/pages/admin/CounselorsPage'
 import { MatchingPage } from '@/pages/admin/MatchingPage'
+import { PathwaySettingsPage } from '@/pages/admin/PathwaySettingsPage'
 import { ReportsPage } from '@/pages/admin/ReportsPage'
 import { DemarchesLayout } from '@/components/candidate/demarches/DemarchesLayout'
 import { CampusFrancePage } from '@/pages/candidate/demarches/CampusFrancePage'
@@ -197,6 +198,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminOnlyRoute>
             <MatchingPage />
+          </AdminOnlyRoute>
+        ),
+      },
+      {
+        path: 'admin/pathway-settings',
+        element: (
+          <AdminOnlyRoute>
+            <PathwaySettingsPage />
           </AdminOnlyRoute>
         ),
       },

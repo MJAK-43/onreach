@@ -113,6 +113,7 @@ export const adminExtraNavItems: NavItemConfig[] = [
 ]
 
 export const systemAdminNavItems: NavItemConfig[] = [
+  { to: '/admin/pathway-settings', label: 'Parcours', icon: ClipboardList },
   { to: '/admin/users', label: 'Utilisateurs', icon: Users, permission: 'users.view' },
   { to: '/admin/roles', label: 'Rôles', icon: UserCog, permission: 'roles.view' },
   { to: '/admin/permissions', label: 'Permissions', icon: KeyRound, permission: 'permissions.view' },

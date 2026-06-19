@@ -20,6 +20,7 @@ final class CandidateApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $auth = $this->loginAsAdmin($client);
 
         $client->request(
@@ -32,6 +33,7 @@ final class CandidateApiTest extends WebTestCase
                 'email' => 'aissatou@example.com',
                 'nationality' => 'Sénégal',
                 'status' => 'lead',
+                'studyApplicationType' => 'first_year',
             ], JSON_THROW_ON_ERROR),
         );
 
@@ -53,6 +55,7 @@ final class CandidateApiTest extends WebTestCase
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedRbac();
+        $this->seedPathways();
         $auth = $this->loginAsAdmin($client);
 
         $client->request(
@@ -65,6 +68,7 @@ final class CandidateApiTest extends WebTestCase
                 'email' => 'mohamed@example.com',
                 'nationality' => 'Côte d\'Ivoire',
                 'status' => 'in_progress',
+                'studyApplicationType' => 'first_year',
             ], JSON_THROW_ON_ERROR),
         );
         $created = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
@@ -88,6 +92,7 @@ final class CandidateApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $auth = $this->loginAsAdmin($client);
 
         $client->request(
@@ -100,6 +105,7 @@ final class CandidateApiTest extends WebTestCase
                 'email' => 'fatou@example.com',
                 'nationality' => 'Sénégal',
                 'status' => 'lead',
+                'studyApplicationType' => 'continuing',
             ], JSON_THROW_ON_ERROR),
         );
         $created = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);

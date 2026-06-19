@@ -11,6 +11,7 @@ use App\Domain\Candidate\Enum\DocumentType;
 use App\Domain\Candidate\Enum\ParcoursupWishStatus;
 use App\Domain\Candidate\Enum\ParisSaclayDegreeLevel;
 use App\Domain\Candidate\Enum\ParisSaclayStatus;
+use App\Domain\Pathway\Enum\StudyApplicationType;
 use App\Domain\User\Enum\SystemRole;
 use App\Entity\CampusFranceApplication;
 use App\Entity\Candidate;
@@ -21,6 +22,7 @@ use App\Entity\ParisSaclayApplication;
 use App\Entity\User;
 use App\Infrastructure\Candidate\CandidateReferenceGenerator;
 use App\Infrastructure\Candidate\CandidateTimelineService;
+use App\Infrastructure\Pathway\PathwayAssignmentService;
 use App\Repository\CandidateRepository;
 use App\Repository\RoleRepository;
 use App\Repository\UserRepository;
@@ -41,6 +43,7 @@ final class SeedDemoUsersCommand extends Command
         private CandidateRepository $candidateRepository,
         private CandidateReferenceGenerator $referenceGenerator,
         private CandidateTimelineService $timelineService,
+        private PathwayAssignmentService $pathwayAssignmentService,
         private UserPasswordHasherInterface $passwordHasher,
         private EntityManagerInterface $entityManager,
     ) {
@@ -98,6 +101,7 @@ final class SeedDemoUsersCommand extends Command
             $dossier->setCity('Abidjan');
             $dossier->setCountry('Côte d\'Ivoire');
             $dossier->setAssignedCounselor($counselor);
+            $dossier->setStudyApplicationType(StudyApplicationType::FIRST_YEAR);
 
             $passport = new CandidateDocument($dossier, DocumentType::PASSPORT, DocumentStatus::VALIDATED);
             $cv = new CandidateDocument($dossier, DocumentType::CV, DocumentStatus::VALIDATED);
@@ -137,12 +141,17 @@ final class SeedDemoUsersCommand extends Command
             $this->timelineService->record($dossier, 'document.uploaded', 'Passeport ajouté');
             $this->timelineService->record($dossier, 'document.validated', 'CV validé');
             $this->timelineService->record($dossier, 'candidate.status_changed', 'Admission obtenue');
+            $this->pathwayAssignmentService->assignForCandidate($dossier);
             $io->success('Dossier démo Mohamed Koffi créé.');
         } else {
             if (null === $dossier->getAssignedCounselor()) {
                 $dossier->setAssignedCounselor($counselor);
             }
+            if (null === $dossier->getStudyApplicationType()) {
+                $dossier->setStudyApplicationType(StudyApplicationType::FIRST_YEAR);
+            }
             $this->ensureDemoApplications($dossier);
+            $this->pathwayAssignmentService->assignForCandidate($dossier);
             $io->note('Dossier démo Mohamed Koffi existant.');
         }
 
@@ -191,7 +200,9 @@ final class SeedDemoUsersCommand extends Command
             $candidate->setReferenceNumber($this->referenceGenerator->generate());
             $candidate->setStatus($status);
             $candidate->setAssignedCounselor($counselor);
+            $candidate->setStudyApplicationType(StudyApplicationType::CONTINUING);
             $this->candidateRepository->save($candidate);
+            $this->pathwayAssignmentService->assignForCandidate($candidate);
         }
     }
 }

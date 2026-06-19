@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, ChevronDown, Globe, LogOut, Menu, Shield, User } from 'lucide-react'
+import { ChevronDown, Globe, LogOut, Menu, Shield, User } from 'lucide-react'
 import { logout } from '@/lib/api'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { getRoleLabel, getPrimaryRole } from '@/lib/roles'
 
@@ -45,12 +46,7 @@ export function AppHeader() {
       <div className="hidden flex-1 lg:block" />
 
       <div className="flex items-center gap-3">
-        <button type="button" className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Notifications">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-            3
-          </span>
-        </button>
+        <NotificationBell />
 
         <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-600">
           <Globe className="h-4 w-4" />

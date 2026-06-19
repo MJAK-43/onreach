@@ -8,11 +8,13 @@ import {
   ProcedureTabs,
   TimelineList,
 } from '@/components/candidate/demarches/DemarchesComponents'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { PathwayHero, PathwayStageTimeline } from '@/components/candidate/demarches/PathwayComponents'
+import { usePathway } from '@/hooks/useMyPathways'
 import { fetchMyParcoursup } from '@/lib/demarches-api'
+import { Badge } from '@/components/ui/badge'
 
 const TABS = [
+  { id: 'steps', label: 'Étapes' },
   { id: 'info', label: 'Informations' },
   { id: 'wishes', label: 'Vœux' },
   { id: 'documents', label: 'Documents' },
@@ -28,44 +30,44 @@ function wishBadgeVariant(status: string): 'success' | 'warning' | 'danger' | 'i
 }
 
 export function ParcoursupPage() {
-  const [tab, setTab] = useState('wishes')
-  const { data, isLoading, isError } = useQuery({
+  const [tab, setTab] = useState('steps')
+  const { pathway, isLoading: pathwaysLoading, isError: pathwaysError } = usePathway('parcoursup')
+  const legacyQuery = useQuery({
     queryKey: ['me-parcoursup'],
     queryFn: fetchMyParcoursup,
+    enabled: tab !== 'steps',
   })
 
-  if (isLoading) return <LoadingState />
-  if (isError || !data) return <ErrorState />
+  if (pathwaysLoading) return <LoadingState />
+  if (pathwaysError || !pathway) {
+    return (
+      <ErrorState message="Parcours Parcoursup non disponible pour votre profil (première année uniquement)." />
+    )
+  }
+
+  const legacy = legacyQuery.data
 
   return (
     <div className="space-y-6">
-      <CandidatePanel>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Parcoursup</h2>
-            <Badge className="mt-2">{data.card.statusLabel}</Badge>
-          </div>
-          <div className="w-full sm:w-48">
-            <p className="mb-1 text-right text-sm font-semibold text-slate-900">{data.card.progress}%</p>
-            <Progress value={data.card.progress} />
-          </div>
-        </div>
-      </CandidatePanel>
-
+      <PathwayHero pathway={pathway} />
       <ProcedureTabs tabs={TABS} active={tab} onChange={setTab} />
+
+      {tab === 'steps' && <PathwayStageTimeline pathway={pathway} />}
 
       {tab === 'info' && (
         <CandidatePanel>
           <CandidateSectionTitle>Informations</CandidateSectionTitle>
-          {data.information ? (
+          {legacyQuery.isLoading ? (
+            <p className="mt-3 text-sm text-slate-500">Chargement…</p>
+          ) : legacy?.information ? (
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="text-slate-500">N° INE</dt>
-                <dd className="font-medium text-slate-900">{String(data.information.ineNumber ?? '—')}</dd>
+                <dd className="font-medium text-slate-900">{String(legacy.information.ineNumber ?? '—')}</dd>
               </div>
               <div>
                 <dt className="text-slate-500">Lycée</dt>
-                <dd className="font-medium text-slate-900">{String(data.information.highSchool ?? '—')}</dd>
+                <dd className="font-medium text-slate-900">{String(legacy.information.highSchool ?? '—')}</dd>
               </div>
             </dl>
           ) : (
@@ -77,25 +79,23 @@ export function ParcoursupPage() {
       {tab === 'wishes' && (
         <CandidatePanel>
           <CandidateSectionTitle>Vœux Parcoursup</CandidateSectionTitle>
-          <ul className="mt-4 divide-y divide-slate-100">
-            {data.wishes.map((wish) => (
-              <li key={wish.id} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0">
-                <div>
-                  <p className="font-medium text-slate-900">{wish.formation}</p>
-                  <p className="text-sm text-slate-500">{wish.university}</p>
-                  {wish.submittedAt && (
-                    <p className="mt-1 text-xs text-slate-400">
-                      Dépôt : {new Date(wish.submittedAt).toLocaleDateString('fr-FR')}
-                    </p>
-                  )}
-                </div>
-                <Badge variant={wishBadgeVariant(wish.status)}>{wish.statusLabel}</Badge>
-              </li>
-            ))}
-            {data.wishes.length === 0 && (
-              <li className="py-4 text-sm text-slate-500">Aucun vœu enregistré.</li>
-            )}
-          </ul>
+          {legacyQuery.isLoading ? (
+            <p className="mt-3 text-sm text-slate-500">Chargement…</p>
+          ) : (
+            <ul className="mt-4 divide-y divide-slate-100">
+              {legacy?.wishes.map((wish) => (
+                <li key={wish.id} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0">
+                  <div>
+                    <p className="font-medium text-slate-900">{wish.formation}</p>
+                    <p className="text-sm text-slate-500">{wish.university}</p>
+                  </div>
+                  <Badge variant={wishBadgeVariant(wish.status)}>{wish.statusLabel}</Badge>
+                </li>
+              )) ?? (
+                <li className="py-4 text-sm text-slate-500">Aucun vœu enregistré.</li>
+              )}
+            </ul>
+          )}
         </CandidatePanel>
       )}
 
@@ -103,7 +103,11 @@ export function ParcoursupPage() {
         <CandidatePanel>
           <CandidateSectionTitle>Documents Parcoursup</CandidateSectionTitle>
           <div className="mt-4">
-            <DocumentStatusList documents={data.documents} />
+            {legacy?.documents ? (
+              <DocumentStatusList documents={legacy.documents} />
+            ) : (
+              <p className="text-sm text-slate-500">Chargement…</p>
+            )}
           </div>
         </CandidatePanel>
       )}
@@ -112,7 +116,7 @@ export function ParcoursupPage() {
         <CandidatePanel>
           <CandidateSectionTitle>Historique</CandidateSectionTitle>
           <div className="mt-4">
-            <TimelineList entries={data.history} />
+            {legacy ? <TimelineList entries={legacy.history} /> : <p className="text-sm text-slate-500">Chargement…</p>}
           </div>
         </CandidatePanel>
       )}

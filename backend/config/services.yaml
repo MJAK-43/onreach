@@ -56,6 +56,15 @@ services:
         arguments:
             $fromAddress: '%app.mailer_from%'
 
+    App\Infrastructure\Mail\PathwayValidationMailer:
+        arguments:
+            $fromAddress: '%app.mailer_from%'
+            $frontendUrl: '%app.frontend_url%'
+
+    App\Infrastructure\Pathway\PathwayEventNotifier:
+        arguments:
+            $frontendUrl: '%app.frontend_url%'
+
     App\Application\Auth\Command\LoginCommandHandler:
         arguments:
             $refreshTokenTtl: 2592000

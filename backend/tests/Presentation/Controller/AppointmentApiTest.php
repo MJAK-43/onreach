@@ -38,6 +38,7 @@ final class AppointmentApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $counselor = static::getContainer()->get(\App\Repository\UserRepository::class)
@@ -102,6 +103,7 @@ final class AppointmentApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $counselorAuth = $this->login($client, 'marie.kouassi@onreach.inovixora.fr', 'Counselor@OnReach12!');

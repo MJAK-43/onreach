@@ -14,7 +14,6 @@
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
-        <server name="DATABASE_URL" value="sqlite:///:memory:" force="true" />
         <server name="JWT_PASSPHRASE" value="test" force="true" />
         <server name="JWT_SECRET_KEY" value="%kernel.project_dir%/config/jwt/private.pem" force="true" />
         <server name="JWT_PUBLIC_KEY" value="%kernel.project_dir%/config/jwt/public.pem" force="true" />

@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Domain\Candidate\Enum\CandidateStatus;
+use App\Domain\Pathway\Enum\StudyApplicationType;
 use App\Infrastructure\ApiPlatform\CandidateProcessor;
 use App\Infrastructure\ApiPlatform\CandidateProvider;
 use App\Repository\CandidateRepository;
@@ -243,6 +244,14 @@ class Candidate
     #[Groups(['candidate:read', 'candidate:write'])]
     private ?ParisSaclayApplication $parisSaclayApplication = null;
 
+    #[ORM\Column(enumType: StudyApplicationType::class, nullable: true)]
+    #[Groups(['candidate:read', 'candidate:write'])]
+    private ?StudyApplicationType $studyApplicationType = null;
+
+    /** @var Collection<int, CandidatePathway> */
+    #[ORM\OneToMany(mappedBy: 'candidate', targetEntity: CandidatePathway::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $pathways;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -261,6 +270,7 @@ class Candidate
         $this->documents = new ArrayCollection();
         $this->notes = new ArrayCollection();
         $this->timelineEntries = new ArrayCollection();
+        $this->pathways = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
     }
@@ -885,6 +895,41 @@ class Candidate
         $done = count(array_filter($sections));
 
         return (int) round(($done / count($sections)) * 100);
+    }
+
+    public function getStudyApplicationType(): ?StudyApplicationType
+    {
+        return $this->studyApplicationType;
+    }
+
+    public function setStudyApplicationType(?StudyApplicationType $studyApplicationType): self
+    {
+        $this->studyApplicationType = $studyApplicationType;
+        $this->touch();
+
+        return $this;
+    }
+
+    /** @return Collection<int, CandidatePathway> */
+    public function getPathways(): Collection
+    {
+        return $this->pathways;
+    }
+
+    public function addPathway(CandidatePathway $pathway): self
+    {
+        if (!$this->pathways->contains($pathway)) {
+            $this->pathways->add($pathway);
+        }
+
+        return $this;
+    }
+
+    public function removePathway(CandidatePathway $pathway): self
+    {
+        $this->pathways->removeElement($pathway);
+
+        return $this;
     }
 
     private function isIdentityComplete(): bool

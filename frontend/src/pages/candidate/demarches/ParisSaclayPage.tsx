@@ -7,60 +7,56 @@ import {
   LoadingState,
   ProcedureTabs,
   TimelineList,
-  WorkflowStepper,
 } from '@/components/candidate/demarches/DemarchesComponents'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { PathwayHero, PathwayStageTimeline } from '@/components/candidate/demarches/PathwayComponents'
+import { usePathway } from '@/hooks/useMyPathways'
 import { fetchMyParisSaclay } from '@/lib/demarches-api'
 
 const TABS = [
+  { id: 'steps', label: 'Étapes' },
   { id: 'info', label: 'Informations' },
   { id: 'documents', label: 'Documents' },
   { id: 'project', label: 'Projet' },
-  { id: 'workflow', label: 'Workflow' },
   { id: 'history', label: 'Historique' },
   { id: 'messages', label: 'Messages' },
 ]
 
 export function ParisSaclayPage() {
-  const [tab, setTab] = useState('info')
-  const { data, isLoading, isError } = useQuery({
+  const [tab, setTab] = useState('steps')
+  const { pathway, isLoading: pathwaysLoading, isError: pathwaysError } = usePathway('paris_saclay')
+  const legacyQuery = useQuery({
     queryKey: ['me-paris-saclay'],
     queryFn: fetchMyParisSaclay,
+    enabled: tab !== 'steps',
   })
 
-  if (isLoading) return <LoadingState />
-  if (isError || !data) return <ErrorState />
+  if (pathwaysLoading) return <LoadingState />
+  if (pathwaysError || !pathway) {
+    return (
+      <ErrorState message="Parcours Paris-Saclay non disponible pour votre profil (poursuite d'études uniquement)." />
+    )
+  }
+
+  const legacy = legacyQuery.data
 
   return (
     <div className="space-y-6">
-      <CandidatePanel>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Paris-Saclay</h2>
-            <Badge variant="info" className="mt-2">
-              {data.card.statusLabel}
-            </Badge>
-          </div>
-          <div className="w-full sm:w-48">
-            <p className="mb-1 text-right text-sm font-semibold text-slate-900">{data.card.progress}%</p>
-            <Progress value={data.card.progress} />
-          </div>
-        </div>
-        <p className="mt-4 text-sm text-blue-600">{data.card.nextAction}</p>
-      </CandidatePanel>
-
+      <PathwayHero pathway={pathway} />
       <ProcedureTabs tabs={TABS} active={tab} onChange={setTab} />
+
+      {tab === 'steps' && <PathwayStageTimeline pathway={pathway} />}
 
       {tab === 'info' && (
         <CandidatePanel>
           <CandidateSectionTitle>Informations</CandidateSectionTitle>
-          {data.information ? (
+          {legacyQuery.isLoading ? (
+            <p className="mt-3 text-sm text-slate-500">Chargement…</p>
+          ) : legacy?.information ? (
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="text-slate-500">Niveau</dt>
                 <dd className="font-medium text-slate-900">
-                  {String(data.information.degreeLevelLabel ?? '—')}
+                  {String(legacy.information.degreeLevelLabel ?? '—')}
                 </dd>
               </div>
             </dl>
@@ -74,7 +70,11 @@ export function ParisSaclayPage() {
         <CandidatePanel>
           <CandidateSectionTitle>Documents Paris-Saclay</CandidateSectionTitle>
           <div className="mt-4">
-            <DocumentStatusList documents={data.documents} />
+            {legacy?.documents ? (
+              <DocumentStatusList documents={legacy.documents} />
+            ) : (
+              <p className="text-sm text-slate-500">Chargement…</p>
+            )}
           </div>
         </CandidatePanel>
       )}
@@ -83,17 +83,8 @@ export function ParisSaclayPage() {
         <CandidatePanel>
           <CandidateSectionTitle>Projet de recherche</CandidateSectionTitle>
           <p className="mt-4 text-sm text-slate-700">
-            {String(data.project.researchProject ?? 'Aucun projet renseigné.')}
+            {legacy ? String(legacy.project.researchProject ?? 'Aucun projet renseigné.') : 'Chargement…'}
           </p>
-        </CandidatePanel>
-      )}
-
-      {tab === 'workflow' && (
-        <CandidatePanel>
-          <CandidateSectionTitle>Workflow</CandidateSectionTitle>
-          <div className="mt-4">
-            <WorkflowStepper steps={data.workflow} />
-          </div>
         </CandidatePanel>
       )}
 
@@ -101,7 +92,7 @@ export function ParisSaclayPage() {
         <CandidatePanel>
           <CandidateSectionTitle>Historique</CandidateSectionTitle>
           <div className="mt-4">
-            <TimelineList entries={data.history} />
+            {legacy ? <TimelineList entries={legacy.history} /> : <p className="text-sm text-slate-500">Chargement…</p>}
           </div>
         </CandidatePanel>
       )}

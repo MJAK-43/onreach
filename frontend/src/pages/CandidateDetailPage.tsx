@@ -13,6 +13,7 @@ import {
   type CandidateDocumentItem,
 } from '@/lib/api'
 import { PermissionGate } from '@/components/auth/PermissionGate'
+import { StaffPathwaysTab } from '@/components/staff/pathways/StaffPathwaysTab'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -27,7 +28,7 @@ import { Label } from '@/components/ui/label'
 const TABS = [
   { id: 'info', label: 'Informations' },
   { id: 'documents', label: 'Documents' },
-  { id: 'campus', label: 'Campus France' },
+  { id: 'pathways', label: 'Parcours' },
   { id: 'timeline', label: 'Historique' },
   { id: 'notes', label: 'Notes' },
 ] as const
@@ -156,26 +157,10 @@ export function CandidateDetailPage() {
         />
       )}
 
-      {tab === 'campus' && completionQuery.data && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Checklist Campus France</CardTitle>
-            <CardDescription>{completionQuery.data.checklist.percent}% complété</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              {completionQuery.data.checklist.items.map((item) => (
-                <li key={item.id} className="flex items-center gap-2">
-                  <span>{item.completed ? '✓' : '✗'}</span>
-                  <span>{item.label}</span>
-                  {item.required && (
-                    <span className="text-xs text-muted-foreground">(requis)</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      {tab === 'pathways' && id && (
+        <PermissionGate permission="applications.view">
+          <StaffPathwaysTab candidateId={id} />
+        </PermissionGate>
       )}
 
       {tab === 'timeline' && (

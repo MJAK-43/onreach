@@ -6,6 +6,7 @@ namespace App\Infrastructure\Candidate;
 
 use App\Domain\Candidate\Enum\FinancingType;
 use App\Domain\Candidate\Enum\LanguageCertificateType;
+use App\Domain\Pathway\Enum\StudyApplicationType;
 use App\Entity\AcademicProfile;
 use App\Entity\AcademicRecord;
 use App\Entity\Candidate;
@@ -25,6 +26,7 @@ final readonly class CandidateProfileService
         private EntityManagerInterface $entityManager,
         private CandidateCompletionService $completionService,
         private CandidateTimelineService $timelineService,
+        private \App\Infrastructure\Pathway\PathwayAssignmentService $pathwayAssignmentService,
     ) {
     }
 
@@ -74,6 +76,8 @@ final readonly class CandidateProfileService
                 'targetCountry' => $candidate->getStudyTargetCountry(),
                 'universities' => $candidate->getStudyUniversities() ?? [],
                 'description' => $candidate->getStudyDescription(),
+                'studyApplicationType' => $candidate->getStudyApplicationType()?->value,
+                'studyApplicationTypeLabel' => $candidate->getStudyApplicationType()?->label(),
             ],
             'careerProject' => [
                 'targetJob' => $candidate->getCareerTargetJob(),
@@ -196,6 +200,21 @@ final readonly class CandidateProfileService
      */
     private function applyStudyProject(Candidate $candidate, array $data): void
     {
+        $previousType = $candidate->getStudyApplicationType();
+
+        if (\array_key_exists('studyApplicationType', $data)) {
+            $raw = $data['studyApplicationType'];
+            if (null === $raw || '' === $raw) {
+                $candidate->setStudyApplicationType(null);
+            } else {
+                $type = StudyApplicationType::tryFrom((string) $raw);
+                if (null === $type) {
+                    throw new BadRequestHttpException('Type de candidature invalide.');
+                }
+                $candidate->setStudyApplicationType($type);
+            }
+        }
+
         if (\array_key_exists('domain', $data)) {
             $candidate->setStudyDomain($data['domain'] ? (string) $data['domain'] : null);
         }
@@ -213,6 +232,11 @@ final readonly class CandidateProfileService
         }
         if (\array_key_exists('description', $data)) {
             $candidate->setStudyDescription($data['description'] ? (string) $data['description'] : null);
+        }
+
+        if ($candidate->getStudyApplicationType() instanceof StudyApplicationType
+            && $previousType !== $candidate->getStudyApplicationType()) {
+            $this->pathwayAssignmentService->assignForCandidate($candidate, $previousType);
         }
     }
 

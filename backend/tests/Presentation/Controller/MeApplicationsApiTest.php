@@ -20,6 +20,7 @@ final class MeApplicationsApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $auth = $this->loginAsCandidate($client);
@@ -64,6 +65,7 @@ final class MeApplicationsApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $auth = $this->loginAsCandidate($client);
@@ -80,6 +82,7 @@ final class MeApplicationsApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $auth = $this->loginAsCandidate($client);

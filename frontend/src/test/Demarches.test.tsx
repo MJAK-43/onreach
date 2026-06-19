@@ -35,16 +35,16 @@ vi.mock('@/lib/demarches-api', () => ({
       campusFrance: {
         type: 'campus_france',
         label: 'Campus France',
-        status: 'admission_obtained',
-        statusLabel: 'Admission obtenue',
-        progress: 75,
+        status: 'in_progress',
+        statusLabel: 'En cours',
+        progress: 50,
         updatedAt: new Date().toISOString(),
-        nextAction: 'Lancer la demande de visa',
+        nextAction: 'Compléter le dossier',
       },
       parcoursup: {
         type: 'parcoursup',
         label: 'Parcoursup',
-        status: 'active',
+        status: 'in_progress',
         statusLabel: 'En cours',
         progress: 100,
         updatedAt: new Date().toISOString(),
@@ -53,16 +53,77 @@ vi.mock('@/lib/demarches-api', () => ({
       parisSaclay: {
         type: 'paris_saclay',
         label: 'Paris-Saclay',
-        status: 'under_review',
-        statusLabel: 'Étude du dossier',
-        progress: 40,
+        status: 'not_started',
+        statusLabel: 'Non démarré',
+        progress: 0,
         updatedAt: new Date().toISOString(),
-        nextAction: 'Compléter vos documents',
+        nextAction: '—',
       },
     },
     alerts: [],
   }),
 }))
+
+vi.mock('@/lib/pathways-api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/pathways-api')>()
+  return {
+    ...actual,
+    fetchMyPathways: vi.fn().mockResolvedValue({
+      studyApplicationType: 'first_year',
+      studyApplicationTypeLabel: "Première année d'études en France",
+      pathways: [
+        {
+          id: 'p1',
+          code: 'parcoursup',
+          name: 'Parcoursup',
+          status: 'in_progress',
+          statusLabel: 'En cours',
+          progressPercent: 25,
+          blockedReason: null,
+          doubleValidationEnabled: false,
+          updatedAt: new Date().toISOString(),
+          stages: [
+            {
+              id: 's1',
+              title: 'Création du dossier',
+              description: null,
+              sortOrder: 1,
+              progressPercent: 50,
+              subSteps: [
+                {
+                  id: 'ss1',
+                  title: 'Compte Parcoursup créé',
+                  description: null,
+                  required: true,
+                  sortOrder: 1,
+                  dueDate: '2026-02-01',
+                  validated: true,
+                  counselorValidatedAt: new Date().toISOString(),
+                  counselorValidatedBy: { id: 'u1', firstName: 'Marie', lastName: 'Kouassi', email: 'm@x.fr' },
+                  adminValidatedAt: null,
+                  adminValidatedBy: null,
+                  updatedAt: new Date().toISOString(),
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'p2',
+          code: 'campus_france',
+          name: 'Campus France',
+          status: 'not_started',
+          statusLabel: 'Non démarré',
+          progressPercent: 0,
+          blockedReason: null,
+          doubleValidationEnabled: false,
+          updatedAt: new Date().toISOString(),
+          stages: [],
+        },
+      ],
+    }),
+  }
+})
 
 function wrapper(children: React.ReactNode) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -74,17 +135,17 @@ function wrapper(children: React.ReactNode) {
 }
 
 describe('Mes démarches', () => {
-  it('affiche la navigation des démarches', () => {
+  it('affiche la navigation des démarches', async () => {
     render(wrapper(<DemarchesLayout />))
-    expect(screen.getAllByText('Vue globale').length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Vue globale')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('Campus France').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Historique').length).toBeGreaterThan(0)
   })
 
-  it('affiche la vue globale avec KPIs', async () => {
+  it('affiche la vue globale avec parcours', async () => {
     render(wrapper(<DemarchesOverviewPage />))
-    expect(await screen.findByText('72%')).toBeInTheDocument()
-    expect(screen.getByText('Vos procédures')).toBeInTheDocument()
+    expect(await screen.findByText('Vos parcours')).toBeInTheDocument()
     expect(screen.getByText('Marie Kouassi')).toBeInTheDocument()
+    expect(screen.getByText('Parcoursup')).toBeInTheDocument()
   })
 })

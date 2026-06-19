@@ -7,67 +7,67 @@ import {
   LoadingState,
   ProcedureTabs,
   TimelineList,
-  WorkflowStepper,
 } from '@/components/candidate/demarches/DemarchesComponents'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { PathwayHero, PathwayStageTimeline } from '@/components/candidate/demarches/PathwayComponents'
+import { usePathway } from '@/hooks/useMyPathways'
 import { fetchMyCampusFrance } from '@/lib/demarches-api'
 
 const TABS = [
+  { id: 'steps', label: 'Étapes' },
   { id: 'info', label: 'Informations' },
   { id: 'documents', label: 'Documents' },
-  { id: 'workflow', label: 'Workflow' },
   { id: 'history', label: 'Historique' },
   { id: 'messages', label: 'Messages' },
 ]
 
 export function CampusFrancePage() {
-  const [tab, setTab] = useState('info')
-  const { data, isLoading, isError } = useQuery({
+  const [tab, setTab] = useState('steps')
+  const { pathway, isLoading: pathwaysLoading, isError: pathwaysError } = usePathway('campus_france')
+  const legacyQuery = useQuery({
     queryKey: ['me-campus-france'],
     queryFn: fetchMyCampusFrance,
+    enabled: tab !== 'steps',
   })
 
-  if (isLoading) return <LoadingState />
-  if (isError || !data) return <ErrorState />
+  if (pathwaysLoading) return <LoadingState />
+  if (pathwaysError || !pathway) {
+    return (
+      <ErrorState message="Parcours Campus France non disponible. Vérifiez votre type de candidature dans Mon dossier." />
+    )
+  }
+
+  const legacy = legacyQuery.data
 
   return (
     <div className="space-y-6">
-      <CandidatePanel>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Campus France</h2>
-            <Badge variant="info" className="mt-2">
-              {data.card.statusLabel}
-            </Badge>
-          </div>
-          <div className="w-full sm:w-48">
-            <p className="mb-1 text-right text-sm font-semibold text-slate-900">{data.card.progress}%</p>
-            <Progress value={data.card.progress} />
-          </div>
-        </div>
-        <p className="mt-4 text-sm text-blue-600">{data.card.nextAction}</p>
-      </CandidatePanel>
-
+      <PathwayHero pathway={pathway} />
       <ProcedureTabs tabs={TABS} active={tab} onChange={setTab} />
+
+      {tab === 'steps' && <PathwayStageTimeline pathway={pathway} />}
 
       {tab === 'info' && (
         <CandidatePanel>
           <CandidateSectionTitle>Informations</CandidateSectionTitle>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="text-slate-500">Projet d&apos;études</dt>
-              <dd className="font-medium text-slate-900">
-                {(data.information.studyProject as string) ?? '—'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">Projet professionnel</dt>
-              <dd className="font-medium text-slate-900">
-                {(data.information.professionalProject as string) ?? '—'}
-              </dd>
-            </div>
-          </dl>
+          {legacyQuery.isLoading ? (
+            <p className="mt-3 text-sm text-slate-500">Chargement…</p>
+          ) : legacy ? (
+            <dl className="mt-4 space-y-3 text-sm">
+              <div>
+                <dt className="text-slate-500">Projet d&apos;études</dt>
+                <dd className="font-medium text-slate-900">
+                  {(legacy.information.studyProject as string) ?? '—'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Projet professionnel</dt>
+                <dd className="font-medium text-slate-900">
+                  {(legacy.information.professionalProject as string) ?? '—'}
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="mt-3 text-sm text-slate-500">Informations complémentaires indisponibles.</p>
+          )}
         </CandidatePanel>
       )}
 
@@ -75,16 +75,13 @@ export function CampusFrancePage() {
         <CandidatePanel>
           <CandidateSectionTitle>Documents Campus France</CandidateSectionTitle>
           <div className="mt-4">
-            <DocumentStatusList documents={data.documents} />
-          </div>
-        </CandidatePanel>
-      )}
-
-      {tab === 'workflow' && (
-        <CandidatePanel>
-          <CandidateSectionTitle>Workflow Campus France</CandidateSectionTitle>
-          <div className="mt-4">
-            <WorkflowStepper steps={data.workflow} />
+            {legacyQuery.isLoading ? (
+              <p className="text-sm text-slate-500">Chargement…</p>
+            ) : legacy ? (
+              <DocumentStatusList documents={legacy.documents} />
+            ) : (
+              <p className="text-sm text-slate-500">Aucun document.</p>
+            )}
           </div>
         </CandidatePanel>
       )}
@@ -93,7 +90,13 @@ export function CampusFrancePage() {
         <CandidatePanel>
           <CandidateSectionTitle>Historique</CandidateSectionTitle>
           <div className="mt-4">
-            <TimelineList entries={data.history} />
+            {legacyQuery.isLoading ? (
+              <p className="text-sm text-slate-500">Chargement…</p>
+            ) : legacy ? (
+              <TimelineList entries={legacy.history} />
+            ) : (
+              <p className="text-sm text-slate-500">Aucun événement.</p>
+            )}
           </div>
         </CandidatePanel>
       )}
@@ -102,9 +105,7 @@ export function CampusFrancePage() {
         <CandidatePanel>
           <CandidateSectionTitle>Messages</CandidateSectionTitle>
           <p className="mt-3 text-sm text-slate-500">
-            {data.messages.readOnly
-              ? 'Lecture seule — la messagerie avec votre conseiller sera bientôt disponible.'
-              : null}
+            Lecture seule — la messagerie avec votre conseiller sera bientôt disponible.
           </p>
         </CandidatePanel>
       )}

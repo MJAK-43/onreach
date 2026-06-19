@@ -33,4 +33,12 @@ trait DatabaseTestTrait
             new \Symfony\Component\Console\Output\NullOutput(),
         );
     }
+
+    protected function seedPathways(): void
+    {
+        static::getContainer()->get(\App\Infrastructure\Command\SeedPathwaysCommand::class)->run(
+            new \Symfony\Component\Console\Input\ArrayInput([]),
+            new \Symfony\Component\Console\Output\NullOutput(),
+        );
+    }
 }

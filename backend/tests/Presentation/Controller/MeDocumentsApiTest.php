@@ -21,6 +21,7 @@ final class MeDocumentsApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $auth = $this->loginAsCandidate($client);
@@ -61,6 +62,7 @@ final class MeDocumentsApiTest extends WebTestCase
         $this->resetDatabase();
         $this->seedRbac();
         $this->seedChecklist();
+        $this->seedPathways();
         $this->seedDemoViaConsole();
 
         $candidateAuth = $this->loginAsCandidate($client);

@@ -30,7 +30,7 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            url: 'sqlite:///:memory:'
+            url: '%env(resolve:DATABASE_URL)%'
             server_version: '3'
 
 when@prod:
