@@ -1,16 +1,14 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
   TextAreaField,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, type MyProfile, updateMyProfile } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import type { MyProfile } from '@/lib/profile-api'
 
 const EMPTY_FINANCING: NonNullable<MyProfile['financing']> = {
   type: 'self_funded',
@@ -29,24 +27,29 @@ const FINANCING_TYPES = [
 ]
 
 export function DossierFinancingPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<NonNullable<MyProfile['financing']> | null>(null)
-  const financing = draft ?? profile?.financing ?? EMPTY_FINANCING
-  const patchFinancing = (next: NonNullable<MyProfile['financing']>) => setDraft(next)
-
-  const autoSave = useAutoSave(financing, async (payload) => {
-    await updateMyProfile({ financing: payload })
-  })
+  const { profile, data: financing, setData: patchFinancing, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave(
+      'financing',
+      (value) => value.financing ?? EMPTY_FINANCING,
+      EMPTY_FINANCING,
+    )
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
   }
 
   return (
-    <SectionCard title="Financement" footer={<SaveIndicator {...autoSave} />}>
+    <SectionCard
+      title="Financement"
+      footer={
+        <SaveFooter
+          status={autoSave.status}
+          error={autoSave.error}
+          onSave={saveNow}
+          isSaving={isSaving}
+        />
+      }
+    >
       <FormGrid>
         <div className="space-y-2 sm:col-span-2">
           <label htmlFor="fin-type" className="text-sm font-medium">

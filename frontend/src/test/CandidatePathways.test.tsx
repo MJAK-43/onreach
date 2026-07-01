@@ -183,7 +183,9 @@ describe('CandidateDetailPage — parcours staff', () => {
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Parcours' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Valider conseiller' }))
+    fireEvent.click(
+      await screen.findByRole('checkbox', { name: /Validation conseiller — Compte Parcoursup créé/ }),
+    )
 
     await waitFor(() => {
       expect(pathwaysApi.patchCandidatePathwaySubStep).toHaveBeenCalledWith(
@@ -193,7 +195,5 @@ describe('CandidateDetailPage — parcours staff', () => {
         { counselorValidated: true },
       )
     })
-
-    expect(await screen.findByText(/Validé conseiller par Marie Kouassi/)).toBeInTheDocument()
   })
 })

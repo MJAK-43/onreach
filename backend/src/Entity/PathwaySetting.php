@@ -24,6 +24,9 @@ class PathwaySetting
     #[ORM\Column]
     private bool $doubleValidationEnabled = false;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $doubleValidationEnabledAt = null;
+
     public function __construct(PathwayCode $pathwayCode, bool $doubleValidationEnabled = false)
     {
         $this->id = Uuid::v7();
@@ -46,8 +49,21 @@ class PathwaySetting
         return $this->doubleValidationEnabled;
     }
 
+    public function getDoubleValidationEnabledAt(): ?\DateTimeImmutable
+    {
+        return $this->doubleValidationEnabledAt;
+    }
+
     public function setDoubleValidationEnabled(bool $doubleValidationEnabled): self
     {
+        if ($doubleValidationEnabled && !$this->doubleValidationEnabled) {
+            $this->doubleValidationEnabledAt = new \DateTimeImmutable();
+        }
+
+        if (!$doubleValidationEnabled) {
+            $this->doubleValidationEnabledAt = null;
+        }
+
         $this->doubleValidationEnabled = $doubleValidationEnabled;
 
         return $this;

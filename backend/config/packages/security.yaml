@@ -21,7 +21,7 @@ security:
             pattern: ^/health
             security: false
         api_public:
-            pattern: ^/api/auth/(login|forgot-password|reset-password)$
+            pattern: ^/api/auth/(login|register|forgot-password|reset-password)$
             stateless: true
             security: false
         api_refresh:
@@ -40,6 +40,7 @@ security:
         - { path: ^/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/refresh, roles: PUBLIC_ACCESS }

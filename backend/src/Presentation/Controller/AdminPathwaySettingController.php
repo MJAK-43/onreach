@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Controller;
 
 use App\Domain\Pathway\Enum\PathwayCode;
+use App\Infrastructure\Pathway\PathwayDoubleValidationService;
 use App\Repository\PathwaySettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,6 +23,7 @@ final class AdminPathwaySettingController extends AbstractController
     public function __construct(
         private readonly PathwaySettingRepository $settingRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly PathwayDoubleValidationService $doubleValidationService,
     ) {
     }
 
@@ -57,8 +59,15 @@ final class AdminPathwaySettingController extends AbstractController
             throw new NotFoundHttpException('Paramètre introuvable.');
         }
 
-        $setting->setDoubleValidationEnabled((bool) $payload['doubleValidationEnabled']);
-        $this->entityManager->flush();
+        $wasEnabled = $setting->isDoubleValidationEnabled();
+        $isEnabled = (bool) $payload['doubleValidationEnabled'];
+
+        if ($wasEnabled !== $isEnabled) {
+            $setting->setDoubleValidationEnabled($isEnabled);
+            $this->doubleValidationService->applySettingChange($setting, $wasEnabled, $isEnabled);
+        } else {
+            $this->entityManager->flush();
+        }
 
         return new JsonResponse([
             'code' => $setting->getPathwayCode()->value,

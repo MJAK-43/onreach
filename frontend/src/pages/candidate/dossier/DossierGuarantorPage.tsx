@@ -1,16 +1,14 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, type Guarantor, type MyProfile, updateMyProfile } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import { type Guarantor, type MyProfile } from '@/lib/profile-api'
 
 const EMPTY_FINANCING: NonNullable<MyProfile['financing']> = {
   type: 'guarantor',
@@ -33,17 +31,12 @@ const emptyGuarantor = (): Guarantor => ({
 })
 
 export function DossierGuarantorPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<NonNullable<MyProfile['financing']> | null>(null)
-  const financing = draft ?? profile?.financing ?? { ...EMPTY_FINANCING, guarantors: [emptyGuarantor()] }
-  const patchFinancing = (next: NonNullable<MyProfile['financing']>) => setDraft(next)
-
-  const autoSave = useAutoSave(financing, async (payload) => {
-    await updateMyProfile({ financing: payload })
-  })
+  const { profile, data: financing, setData: patchFinancing, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave(
+      'financing',
+      (value) => value.financing ?? { ...EMPTY_FINANCING, guarantors: [emptyGuarantor()] },
+      { ...EMPTY_FINANCING, guarantors: [emptyGuarantor()] },
+    )
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
@@ -58,7 +51,17 @@ export function DossierGuarantorPage() {
   }
 
   return (
-    <SectionCard title="Garant" footer={<SaveIndicator {...autoSave} />}>
+    <SectionCard
+      title="Garant"
+      footer={
+        <SaveFooter
+          status={autoSave.status}
+          error={autoSave.error}
+          onSave={saveNow}
+          isSaving={isSaving}
+        />
+      }
+    >
       {guarantors.map((g, index) => (
         <div key={g.id ?? index} className="mb-4 rounded-lg border p-4 dark:border-slate-700">
           <FormGrid>

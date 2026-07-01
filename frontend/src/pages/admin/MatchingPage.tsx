@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   assignCandidateCounselor,
   fetchCandidates,
+  fetchRoles,
   fetchUsers,
   type CandidateListItem,
-  type UserListItem,
 } from '@/lib/api'
+import { isCounselorUser } from '@/lib/user-roles'
 import {
   Card,
   CardContent,
@@ -13,16 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-
-function isCounselor(user: UserListItem): boolean {
-  if (!user.roles?.length) return false
-  return user.roles.some((role) => {
-    if (typeof role === 'string') {
-      return role.includes('COUNSELOR')
-    }
-    return role.code === 'COUNSELOR'
-  })
-}
 
 function counselorLabel(candidate: CandidateListItem): string {
   const counselor = candidate.assignedCounselor
@@ -43,8 +34,10 @@ export function MatchingPage() {
 
   const candidatesQuery = useQuery({ queryKey: ['candidates'], queryFn: fetchCandidates })
   const usersQuery = useQuery({ queryKey: ['users'], queryFn: fetchUsers })
+  const rolesQuery = useQuery({ queryKey: ['roles'], queryFn: fetchRoles })
 
-  const counselors = (usersQuery.data ?? []).filter(isCounselor)
+  const roles = rolesQuery.data ?? []
+  const counselors = (usersQuery.data ?? []).filter((user) => isCounselorUser(user, roles))
 
   const assignMutation = useMutation({
     mutationFn: ({
@@ -60,7 +53,7 @@ export function MatchingPage() {
   })
 
   const candidates = candidatesQuery.data ?? []
-  const isLoading = candidatesQuery.isLoading || usersQuery.isLoading
+  const isLoading = candidatesQuery.isLoading || usersQuery.isLoading || rolesQuery.isLoading
 
   return (
     <div className="space-y-6">
@@ -83,7 +76,7 @@ export function MatchingPage() {
           {isLoading && (
             <p className="text-sm text-muted-foreground">Chargement...</p>
           )}
-          {(candidatesQuery.isError || usersQuery.isError) && (
+          {(candidatesQuery.isError || usersQuery.isError || rolesQuery.isError) && (
             <p className="text-sm text-red-600">Impossible de charger les données.</p>
           )}
           {!isLoading && candidates.length === 0 && (

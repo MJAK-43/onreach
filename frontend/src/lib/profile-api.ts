@@ -1,7 +1,7 @@
+import { apiRequest } from '@/lib/api'
 import { getAccessToken } from '@/lib/auth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://api.localhost'
-
 export interface ProfileCompletion {
   profile: number
   documents: number
@@ -180,42 +180,25 @@ export const DOCUMENT_TYPES = [
 
 const jsonHeaders = { Accept: 'application/json', 'Content-Type': 'application/json' } as const
 
-async function profileRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const headers = new Headers(options.headers ?? jsonHeaders)
-  const token = getAccessToken()
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers })
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || response.statusText)
-  }
-  if (response.status === 204) {
-    return undefined as T
-  }
-  return response.json() as Promise<T>
-}
-
 export function fetchMyProfile(): Promise<MyProfile> {
-  return profileRequest<MyProfile>('/api/me/profile')
+  return apiRequest<MyProfile>('/api/me/profile', { headers: jsonHeaders })
 }
 
 export function updateMyProfile(payload: Record<string, unknown>): Promise<MyProfile> {
-  return profileRequest<MyProfile>('/api/me/profile', {
+  return apiRequest<MyProfile>('/api/me/profile', {
     method: 'PUT',
+    headers: jsonHeaders,
     body: JSON.stringify(payload),
   })
 }
 
 export function fetchMyProfileDocuments(): Promise<MyDocument[]> {
-  return profileRequest<MyDocument[]>('/api/me/documents')
+  return apiRequest<MyDocument[]>('/api/me/documents', { headers: jsonHeaders })
 }
 
 export function fetchMyHistory(): Promise<HistoryEntry[]> {
-  return profileRequest<HistoryEntry[]>('/api/me/history')
+  return apiRequest<HistoryEntry[]>('/api/me/history', { headers: jsonHeaders })
 }
-
 export function documentDownloadUrl(id: string): string {
   return `${API_URL}/api/me/documents/${id}/download`
 }
@@ -271,5 +254,8 @@ export async function uploadMyDocument(
 }
 
 export function deleteMyDocument(id: string): Promise<void> {
-  return profileRequest<void>(`/api/me/documents/${id}`, { method: 'DELETE' })
+  return apiRequest<void>(`/api/me/documents/${id}`, {
+    method: 'DELETE',
+    headers: jsonHeaders,
+  })
 }

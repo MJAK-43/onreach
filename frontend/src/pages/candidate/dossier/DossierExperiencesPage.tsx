@@ -1,17 +1,15 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
   TextAreaField,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, updateMyProfile, type ProfessionalExperience } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import type { ProfessionalExperience } from '@/lib/profile-api'
 
 const emptyExp = (): ProfessionalExperience => ({
   company: '',
@@ -22,29 +20,33 @@ const emptyExp = (): ProfessionalExperience => ({
 })
 
 export function DossierExperiencesPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<ProfessionalExperience[] | null>(null)
-  const experiences = draft ?? profile?.experiences ?? []
-
-  const autoSave = useAutoSave(experiences, async (payload) => {
-    await updateMyProfile({ experiences: payload })
-  })
+  const { profile, data: experiences, setData, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave('experiences', (value) => value.experiences, [])
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
   }
 
   const updateExp = (index: number, patch: Partial<ProfessionalExperience>) => {
-    const next = [...experiences]
-    next[index] = { ...next[index], ...patch }
-    setDraft(next)
+    setData((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], ...patch }
+      return next
+    })
   }
 
   return (
-    <SectionCard title="Expériences professionnelles" footer={<SaveIndicator {...autoSave} />}>
+    <SectionCard
+      title="Expériences professionnelles"
+      footer={
+        <SaveFooter
+          status={autoSave.status}
+          error={autoSave.error}
+          onSave={saveNow}
+          isSaving={isSaving}
+        />
+      }
+    >
       <div className="space-y-4">
         {experiences.map((exp, index) => (
           <div key={exp.id ?? index} className="rounded-lg border p-4 dark:border-slate-700">
@@ -57,7 +59,7 @@ export function DossierExperiencesPage() {
             </FormGrid>
           </div>
         ))}
-        <Button type="button" size="sm" variant="outline" onClick={() => setDraft([...experiences, emptyExp()])}>
+        <Button type="button" size="sm" variant="outline" onClick={() => setData((prev) => [...prev, emptyExp()])}>
           Ajouter une expérience
         </Button>
       </div>

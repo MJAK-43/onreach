@@ -21,6 +21,7 @@ export interface PathwayTemplateSummary {
 }
 
 export interface PathwayTemplateDetail extends PathwayTemplateSummary {
+  campaignStartDate: string
   eligibleStudyTypes: string[]
   stages: Array<{
     id: string

@@ -18,26 +18,26 @@ final readonly class PathwayProgressCalculator
 
     public function refresh(CandidatePathway $pathway): void
     {
-        $doubleValidation = $this->isDoubleValidationEnabled($pathway);
+        $context = $this->contextFor($pathway);
 
         foreach ($pathway->getStages() as $stage) {
-            $stage->setProgressPercent($this->computeStageProgress($stage, $doubleValidation));
+            $stage->setProgressPercent($this->computeStageProgress($stage, $context));
         }
 
-        $pathway->setProgressPercent($this->computePathwayProgress($pathway, $doubleValidation));
-        $this->refreshPathwayStatus($pathway, $doubleValidation);
+        $pathway->setProgressPercent($this->computePathwayProgress($pathway, $context));
+        $this->refreshPathwayStatus($pathway);
     }
 
-    private function isDoubleValidationEnabled(CandidatePathway $pathway): bool
+    private function contextFor(CandidatePathway $pathway): PathwayValidationContext
     {
         $setting = $this->settingRepository->findOneByPathwayCode(
             $pathway->getPathwayTemplate()->getCode(),
         );
 
-        return $setting?->isDoubleValidationEnabled() ?? false;
+        return PathwayValidationContext::fromSetting($setting);
     }
 
-    private function computeStageProgress(CandidatePathwayStage $stage, bool $doubleValidation): int
+    private function computeStageProgress(CandidatePathwayStage $stage, PathwayValidationContext $context): int
     {
         $required = 0;
         $validated = 0;
@@ -47,7 +47,7 @@ final readonly class PathwayProgressCalculator
                 continue;
             }
             ++$required;
-            if ($subStep->isValidated($doubleValidation)) {
+            if ($context->isSubStepValidated($subStep)) {
                 ++$validated;
             }
         }
@@ -59,7 +59,7 @@ final readonly class PathwayProgressCalculator
         return (int) round(($validated / $required) * 100);
     }
 
-    private function computePathwayProgress(CandidatePathway $pathway, bool $doubleValidation): int
+    private function computePathwayProgress(CandidatePathway $pathway, PathwayValidationContext $context): int
     {
         $stages = $pathway->getStages()->toArray();
         if ([] === $stages) {
@@ -68,13 +68,13 @@ final readonly class PathwayProgressCalculator
 
         $total = 0;
         foreach ($stages as $stage) {
-            $total += $this->computeStageProgress($stage, $doubleValidation);
+            $total += $this->computeStageProgress($stage, $context);
         }
 
         return (int) round($total / \count($stages));
     }
 
-    private function refreshPathwayStatus(CandidatePathway $pathway, bool $doubleValidation): void
+    private function refreshPathwayStatus(CandidatePathway $pathway): void
     {
         if (\App\Domain\Pathway\Enum\PathwayInstanceStatus::BLOCKED === $pathway->getStatus()) {
             return;
@@ -96,8 +96,8 @@ final readonly class PathwayProgressCalculator
         $pathway->setStatus(\App\Domain\Pathway\Enum\PathwayInstanceStatus::IN_PROGRESS);
     }
 
-    public function isSubStepValidated(CandidatePathwaySubStep $subStep, bool $doubleValidation): bool
+    public function isSubStepValidated(CandidatePathwaySubStep $subStep, CandidatePathway $pathway): bool
     {
-        return $subStep->isValidated($doubleValidation);
+        return $this->contextFor($pathway)->isSubStepValidated($subStep);
     }
 }

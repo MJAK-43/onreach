@@ -15,6 +15,7 @@ final readonly class PathwayCalendarImportService
 {
     public function __construct(
         private PathwayTemplateRepository $templateRepository,
+        private PathwayDueDateSyncService $dueDateSyncService,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -69,6 +70,7 @@ final readonly class PathwayCalendarImportService
 
         if ($apply && $applied > 0) {
             $this->entityManager->flush();
+            $this->dueDateSyncService->syncTemplate($template->getCampaign(), $template);
         }
 
         return [

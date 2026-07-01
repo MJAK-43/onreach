@@ -75,3 +75,7 @@ services:
         arguments:
             $refreshTokenTtl: 2592000
             $rememberMeTtl: 7776000
+
+    App\Application\Auth\Command\RegisterCommandHandler:
+        arguments:
+            $refreshTokenTtl: 2592000

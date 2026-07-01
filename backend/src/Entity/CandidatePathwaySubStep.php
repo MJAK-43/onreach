@@ -48,6 +48,9 @@ class CandidatePathwaySubStep
     private ?User $adminValidatedBy = null;
 
     #[ORM\Column]
+    private bool $grandfatheredValidation = false;
+
+    #[ORM\Column]
     private \DateTimeImmutable $updatedAt;
 
     public function __construct(
@@ -96,6 +99,14 @@ class CandidatePathwaySubStep
         return $this->dueDate;
     }
 
+    public function setDueDate(?\DateTimeImmutable $dueDate): self
+    {
+        $this->dueDate = $dueDate;
+        $this->touch();
+
+        return $this;
+    }
+
     public function getDueReminderSentAt(): ?\DateTimeImmutable
     {
         return $this->dueReminderSentAt;
@@ -134,6 +145,19 @@ class CandidatePathwaySubStep
         return $this->updatedAt;
     }
 
+    public function isGrandfatheredValidation(): bool
+    {
+        return $this->grandfatheredValidation;
+    }
+
+    public function setGrandfatheredValidation(bool $grandfatheredValidation): self
+    {
+        $this->grandfatheredValidation = $grandfatheredValidation;
+        $this->touch();
+
+        return $this;
+    }
+
     public function validateByCounselor(User $user): self
     {
         $this->counselorValidatedAt = new \DateTimeImmutable();
@@ -158,6 +182,7 @@ class CandidatePathwaySubStep
         $this->counselorValidatedBy = null;
         $this->adminValidatedAt = null;
         $this->adminValidatedBy = null;
+        $this->grandfatheredValidation = false;
         $this->touch();
 
         return $this;
@@ -167,6 +192,7 @@ class CandidatePathwaySubStep
     {
         $this->counselorValidatedAt = null;
         $this->counselorValidatedBy = null;
+        $this->grandfatheredValidation = false;
         $this->touch();
 
         return $this;
@@ -181,13 +207,44 @@ class CandidatePathwaySubStep
         return $this;
     }
 
-    public function isValidated(bool $doubleValidationRequired): bool
-    {
-        if ($doubleValidationRequired) {
-            return null !== $this->counselorValidatedAt && null !== $this->adminValidatedAt;
+    public function isValidated(
+        bool $doubleValidationRequired,
+        ?\DateTimeImmutable $doubleValidationEnabledAt = null,
+    ): bool {
+        if (!$doubleValidationRequired) {
+            return null !== $this->counselorValidatedAt || null !== $this->adminValidatedAt;
         }
 
-        return null !== $this->counselorValidatedAt || null !== $this->adminValidatedAt;
+        if (null !== $this->counselorValidatedAt && null !== $this->adminValidatedAt) {
+            return true;
+        }
+
+        if ($this->grandfatheredValidation && null !== $this->counselorValidatedAt) {
+            return true;
+        }
+
+        if (
+            null !== $doubleValidationEnabledAt
+            && null !== $this->counselorValidatedAt
+            && $this->counselorValidatedAt <= $doubleValidationEnabledAt
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isPendingAdminValidation(
+        bool $doubleValidationRequired,
+        ?\DateTimeImmutable $doubleValidationEnabledAt = null,
+    ): bool {
+        if (!$doubleValidationRequired) {
+            return false;
+        }
+
+        return null !== $this->counselorValidatedAt
+            && null === $this->adminValidatedAt
+            && !$this->isValidated($doubleValidationRequired, $doubleValidationEnabledAt);
     }
 
     private function touch(): void

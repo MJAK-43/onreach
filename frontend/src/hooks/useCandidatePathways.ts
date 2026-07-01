@@ -42,6 +42,7 @@ export function usePatchCandidatePathwaySubStep(candidateId: string) {
           }
         },
       )
+      void queryClient.invalidateQueries({ queryKey: ['candidate-pathways', candidateId] })
       void queryClient.invalidateQueries({ queryKey: ['candidate-timeline', candidateId] })
       void queryClient.invalidateQueries({ queryKey: ['candidate-completion', candidateId] })
       void queryClient.invalidateQueries({ queryKey: ['candidate-pathway-audit', candidateId] })

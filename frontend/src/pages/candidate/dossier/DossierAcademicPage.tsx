@@ -1,17 +1,15 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
   TextAreaField,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, type AcademicRecord, type MyProfile, updateMyProfile } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import { type AcademicRecord, type MyProfile } from '@/lib/profile-api'
 
 const EMPTY_ACADEMIC: NonNullable<MyProfile['academic']> = {
   highestDiploma: null,
@@ -37,44 +35,49 @@ const emptyRecord = (): AcademicRecord => ({
 })
 
 export function DossierAcademicPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<NonNullable<MyProfile['academic']> | null>(null)
-  const academic = draft ?? profile?.academic ?? EMPTY_ACADEMIC
-
-  const autoSave = useAutoSave(academic, async (payload) => {
-    await updateMyProfile({ academic: payload })
-  })
+  const { profile, data: academic, setData: patchAcademic, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave(
+      'academic',
+      (value) => value.academic ?? EMPTY_ACADEMIC,
+      EMPTY_ACADEMIC,
+    )
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
   }
 
-  const patchAcademic = (next: NonNullable<MyProfile['academic']>) => setDraft(next)
-
   const updateRecord = (index: number, patch: Partial<AcademicRecord>) => {
-    const base = draft ?? profile.academic ?? EMPTY_ACADEMIC
-    const records = [...base.records]
-    records[index] = { ...records[index], ...patch }
-    patchAcademic({ ...base, records })
+    patchAcademic((base) => {
+      const records = [...base.records]
+      records[index] = { ...records[index], ...patch }
+      return { ...base, records }
+    })
   }
 
   return (
     <div className="space-y-6">
-      <SectionCard title="Parcours académique" footer={<SaveIndicator {...autoSave} />}>
+      <SectionCard
+        title="Parcours académique"
+        footer={
+          <SaveFooter
+            status={autoSave.status}
+            error={autoSave.error}
+            onSave={saveNow}
+            isSaving={isSaving}
+          />
+        }
+      >
         <FormGrid>
-          <FormField label="Diplôme le plus élevé" id="highestDiploma" value={academic.highestDiploma ?? ''} onChange={(v) => patchAcademic({ ...academic, highestDiploma: v })} />
-          <FormField label="Établissement" id="institutionName" value={academic.institutionName ?? ''} onChange={(v) => patchAcademic({ ...academic, institutionName: v })} />
-          <FormField label="Année" id="graduationYear" type="number" value={String(academic.graduationYear ?? '')} onChange={(v) => patchAcademic({ ...academic, graduationYear: v ? Number(v) : null })} />
-          <FormField label="Moyenne" id="overallAverage" value={academic.overallAverage ?? ''} onChange={(v) => patchAcademic({ ...academic, overallAverage: v })} />
+          <FormField label="Diplôme le plus élevé" id="highestDiploma" value={academic.highestDiploma ?? ''} onChange={(v) => patchAcademic((prev) => ({ ...prev, highestDiploma: v }))} />
+          <FormField label="Établissement" id="institutionName" value={academic.institutionName ?? ''} onChange={(v) => patchAcademic((prev) => ({ ...prev, institutionName: v }))} />
+          <FormField label="Année" id="graduationYear" type="number" value={String(academic.graduationYear ?? '')} onChange={(v) => patchAcademic((prev) => ({ ...prev, graduationYear: v ? Number(v) : null }))} />
+          <FormField label="Moyenne" id="overallAverage" value={academic.overallAverage ?? ''} onChange={(v) => patchAcademic((prev) => ({ ...prev, overallAverage: v }))} />
         </FormGrid>
 
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Diplômes</h3>
-            <Button type="button" size="sm" variant="outline" onClick={() => patchAcademic({ ...academic, records: [...academic.records, emptyRecord()] })}>
+            <Button type="button" size="sm" variant="outline" onClick={() => patchAcademic((prev) => ({ ...prev, records: [...prev.records, emptyRecord()] }))}>
               Ajouter un diplôme
             </Button>
           </div>

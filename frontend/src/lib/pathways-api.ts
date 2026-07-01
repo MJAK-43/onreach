@@ -20,6 +20,8 @@ export interface PathwaySubStep {
   sortOrder: number
   dueDate: string | null
   validated: boolean
+  pendingAdminValidation?: boolean
+  grandfatheredValidation?: boolean
   counselorValidatedAt: string | null
   counselorValidatedBy: PathwayUser | null
   adminValidatedAt: string | null
@@ -77,6 +79,25 @@ export const PATHWAY_LABELS: Record<PathwayCode, string> = {
   campus_france: 'Campus France',
   parcoursup: 'Parcoursup',
   paris_saclay: 'Paris-Saclay',
+}
+
+export const PATHWAY_SLUGS: Record<PathwayCode, string> = {
+  campus_france: 'campus-france',
+  parcoursup: 'parcoursup',
+  paris_saclay: 'paris-saclay',
+}
+
+export function pathwayCodeFromSlug(slug: string): PathwayCode | null {
+  const entry = Object.entries(PATHWAY_SLUGS).find(([, value]) => value === slug)
+  return entry ? (entry[0] as PathwayCode) : null
+}
+
+export function staffPathwayRoute(candidateId: string, code: PathwayCode): string {
+  return `/pathways/tracking/${candidateId}/${PATHWAY_SLUGS[code]}`
+}
+
+export function staffPathwayTrackingBase(candidateId: string): string {
+  return `/pathways/tracking/${candidateId}`
 }
 
 const jsonHeaders = { Accept: 'application/json' } as const
@@ -175,6 +196,18 @@ export function isCounselorValidated(subStep: PathwaySubStep): boolean {
 
 export function isAdminValidated(subStep: PathwaySubStep): boolean {
   return subStep.adminValidatedAt !== null
+}
+
+export function isPendingAdminValidation(subStep: PathwaySubStep, pathway: Pathway): boolean {
+  if (subStep.pendingAdminValidation !== undefined) {
+    return subStep.pendingAdminValidation
+  }
+
+  if (!pathway.doubleValidationEnabled || subStep.validated || subStep.grandfatheredValidation) {
+    return false
+  }
+
+  return isCounselorValidated(subStep) && !isAdminValidated(subStep)
 }
 
 export function formatPathwayUser(user: PathwayUser): string {

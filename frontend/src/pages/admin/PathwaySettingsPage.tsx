@@ -22,11 +22,21 @@ import {
 } from '@/lib/pathway-admin-api'
 import { fetchPathwaySettings, updatePathwaySetting } from '@/lib/notifications-api'
 
+function formatDueDate(campaignStartDate: string, offsetDays: number | null): string | null {
+  if (offsetDays === null) {
+    return null
+  }
+  const start = new Date(`${campaignStartDate}T00:00:00`)
+  start.setDate(start.getDate() + offsetDays)
+  return start.toLocaleDateString('fr-FR')
+}
+
 export function PathwaySettingsPage() {
   const queryClient = useQueryClient()
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [calendarText, setCalendarText] = useState('')
   const [newCampaignYear, setNewCampaignYear] = useState('2027')
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   const settingsQuery = useQuery({
     queryKey: ['pathway-settings'],
@@ -168,6 +178,11 @@ export function PathwaySettingsPage() {
 
           {templateDetailQuery.data && (
             <div className="space-y-3">
+              {syncMessage && (
+                <p className="text-sm text-emerald-700" role="status">
+                  {syncMessage}
+                </p>
+              )}
               {templateDetailQuery.data.stages.map((stage) => (
                 <div key={stage.id} className="rounded-lg border border-border p-3">
                   <p className="font-medium">{stage.title}</p>
@@ -184,13 +199,23 @@ export function PathwaySettingsPage() {
                             const value = event.target.value
                             void updatePathwaySubStepTemplate(subStep.id, {
                               defaultDueOffsetDays: value === '' ? null : Number(value),
-                            }).then(() => {
+                            }).then((result) => {
+                              const synced = (result as { syncedCount?: number }).syncedCount
+                              if (typeof synced === 'number') {
+                                setSyncMessage(`${synced} échéance(s) propagée(s) aux candidats.`)
+                              }
                               void queryClient.invalidateQueries({
                                 queryKey: ['admin-pathway-template', selectedTemplateId],
                               })
                             })
                           }}
                         />
+                        <span className="text-xs text-muted-foreground">
+                          {formatDueDate(
+                            templateDetailQuery.data.campaignStartDate,
+                            subStep.defaultDueOffsetDays,
+                          ) ?? '—'}
+                        </span>
                       </li>
                     ))}
                   </ul>

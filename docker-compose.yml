@@ -144,7 +144,7 @@ services:
       context: ./frontend
       target: dev
     ports:
-      - "5173:5173"
+      - "8082:5173"
     environment:
       VITE_API_URL: http://localhost:8081
     volumes:

@@ -1,15 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Circle,
-  Clock,
-  Lock,
-} from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { StudyTypeBanner } from '@/components/candidate/demarches/PathwayComponents'
+import { StaffEditablePathwayTimeline } from '@/components/staff/pathways/StaffEditablePathwayTimeline'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,19 +15,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { useCurrentUser } from '@/hooks/useCurrentUser'
 import {
   useCandidatePathways,
   usePatchCandidatePathway,
-  usePatchCandidatePathwaySubStep,
 } from '@/hooks/useCandidatePathways'
-import type { Pathway, PathwayStage, PathwaySubStep } from '@/lib/pathways-api'
+import type { Pathway } from '@/lib/pathways-api'
 import {
   countValidatedSubSteps,
-  formatPathwayUser,
   getNextPendingSubStep,
-  isAdminValidated,
-  isCounselorValidated,
 } from '@/lib/pathways-api'
 import { fetchCandidatePathwayAudit } from '@/lib/notifications-api'
 import { cn } from '@/lib/utils'
@@ -86,215 +75,6 @@ function StaffPathwaySummary({ pathway }: { pathway: Pathway }) {
           <Progress value={pathway.progressPercent} className="h-2" />
         </div>
       </div>
-    </div>
-  )
-}
-
-function StaffSubStepRow({
-  subStep,
-  pathway,
-  isAdmin,
-  onValidate,
-  onInvalidate,
-  onAdminValidate,
-  onAdminInvalidate,
-  isPending,
-}: {
-  subStep: PathwaySubStep
-  pathway: Pathway
-  isAdmin: boolean
-  onValidate: (subStepId: string) => void
-  onInvalidate: (subStepId: string) => void
-  onAdminValidate: (subStepId: string) => void
-  onAdminInvalidate: (subStepId: string) => void
-  isPending: boolean
-}) {
-  const counselorValidated = isCounselorValidated(subStep)
-  const adminValidated = isAdminValidated(subStep)
-  const isOverdue =
-    subStep.dueDate && !subStep.validated && new Date(subStep.dueDate) < new Date(new Date().toDateString())
-
-  return (
-    <li
-      className={cn(
-        'rounded-lg border p-4',
-        subStep.validated
-          ? 'border-emerald-200 bg-emerald-50/50'
-          : counselorValidated
-            ? 'border-amber-200 bg-amber-50/40'
-            : isOverdue
-              ? 'border-orange-200 bg-orange-50/40'
-              : 'border-border bg-background',
-      )}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          {subStep.validated ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-          ) : counselorValidated ? (
-            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          ) : (
-            <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-medium">{subStep.title}</p>
-              {!subStep.required && (
-                <Badge variant="default" className="text-[10px]">
-                  Optionnel
-                </Badge>
-              )}
-              {isOverdue && (
-                <Badge variant="warning" className="text-[10px]">
-                  En retard
-                </Badge>
-              )}
-              {counselorValidated && !subStep.validated && pathway.doubleValidationEnabled && (
-                <Badge variant="warning" className="text-[10px]">
-                  En attente admin
-                </Badge>
-              )}
-            </div>
-            {subStep.description && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{subStep.description}</p>
-            )}
-            {subStep.dueDate && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                Échéance {new Date(subStep.dueDate).toLocaleDateString('fr-FR')}
-              </p>
-            )}
-            {counselorValidated && subStep.counselorValidatedBy && (
-              <p className="mt-1 text-xs text-emerald-700">
-                Validé conseiller par {formatPathwayUser(subStep.counselorValidatedBy)}
-                {subStep.counselorValidatedAt &&
-                  ` le ${new Date(subStep.counselorValidatedAt).toLocaleDateString('fr-FR')}`}
-              </p>
-            )}
-            {subStep.adminValidatedBy && (
-              <p className="mt-0.5 text-xs text-blue-700">
-                Validé admin par {formatPathwayUser(subStep.adminValidatedBy)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <PermissionGate permission="applications.edit">
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            {!counselorValidated ? (
-              <Button
-                type="button"
-                size="sm"
-                disabled={isPending}
-                onClick={() => onValidate(subStep.id)}
-              >
-                Valider conseiller
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={isPending}
-                onClick={() => onInvalidate(subStep.id)}
-              >
-                Retirer conseiller
-              </Button>
-            )}
-            {isAdmin && pathway.doubleValidationEnabled && (
-              !adminValidated ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  disabled={isPending}
-                  onClick={() => onAdminValidate(subStep.id)}
-                >
-                  Valider admin
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={isPending}
-                  onClick={() => onAdminInvalidate(subStep.id)}
-                >
-                  Retirer admin
-                </Button>
-              )
-            )}
-          </div>
-        </PermissionGate>
-      </div>
-    </li>
-  )
-}
-
-function StaffStageBlock({
-  stage,
-  pathway,
-  isAdmin,
-  onValidate,
-  onInvalidate,
-  onAdminValidate,
-  onAdminInvalidate,
-  isPendingSubStepId,
-  defaultOpen,
-}: {
-  stage: PathwayStage
-  pathway: Pathway
-  isAdmin: boolean
-  onValidate: (subStepId: string) => void
-  onInvalidate: (subStepId: string) => void
-  onAdminValidate: (subStepId: string) => void
-  onAdminInvalidate: (subStepId: string) => void
-  isPendingSubStepId: string | null
-  defaultOpen: boolean
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-  const requiredSubSteps = stage.subSteps.filter((s) => s.required)
-  const validatedCount = requiredSubSteps.filter((s) => s.validated).length
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/50"
-      >
-        {open ? (
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-medium">{stage.title}</h4>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {validatedCount}/{requiredSubSteps.length || stage.subSteps.length}
-            </span>
-          </div>
-        </div>
-        <span className="text-sm font-semibold tabular-nums">{stage.progressPercent}%</span>
-      </button>
-      {open && (
-        <ul className="space-y-2 border-t border-border bg-muted/20 p-4">
-          {stage.subSteps.map((subStep) => (
-            <StaffSubStepRow
-              key={subStep.id}
-              subStep={subStep}
-              pathway={pathway}
-              isAdmin={isAdmin}
-              onValidate={onValidate}
-              onInvalidate={onInvalidate}
-              onAdminValidate={onAdminValidate}
-              onAdminInvalidate={onAdminInvalidate}
-              isPending={isPendingSubStepId === subStep.id}
-            />
-          ))}
-        </ul>
-      )}
     </div>
   )
 }
@@ -355,67 +135,11 @@ function PathwayStatusControls({
 }
 
 function StaffPathwayPanel({ pathway, candidateId }: { pathway: Pathway; candidateId: string }) {
-  const patchMutation = usePatchCandidatePathwaySubStep(candidateId)
-  const { data: user } = useCurrentUser()
-  const isAdmin = user?.roles.some((role) => role === 'ADMIN' || role === 'SUPER_ADMIN') ?? false
-  const firstIncompleteIndex = pathway.stages.findIndex((stage) => stage.progressPercent < 100)
-  const pendingSubStepId = patchMutation.isPending ? (patchMutation.variables?.subStepId ?? null) : null
-
-  const handleValidate = (subStepId: string) => {
-    patchMutation.mutate({
-      pathwayId: pathway.id,
-      subStepId,
-      payload: { counselorValidated: true },
-    })
-  }
-
-  const handleInvalidate = (subStepId: string) => {
-    patchMutation.mutate({
-      pathwayId: pathway.id,
-      subStepId,
-      payload: { counselorValidated: false },
-    })
-  }
-
-  const handleAdminValidate = (subStepId: string) => {
-    patchMutation.mutate({
-      pathwayId: pathway.id,
-      subStepId,
-      payload: { adminValidated: true },
-    })
-  }
-
-  const handleAdminInvalidate = (subStepId: string) => {
-    patchMutation.mutate({
-      pathwayId: pathway.id,
-      subStepId,
-      payload: { adminValidated: false },
-    })
-  }
-
   return (
     <div className="space-y-4">
       <StaffPathwaySummary pathway={pathway} />
       <PathwayStatusControls pathway={pathway} candidateId={candidateId} />
-      <div className="space-y-3">
-        {pathway.stages.map((stage, index) => (
-          <StaffStageBlock
-            key={stage.id}
-            stage={stage}
-            pathway={pathway}
-            isAdmin={isAdmin}
-            onValidate={handleValidate}
-            onInvalidate={handleInvalidate}
-            onAdminValidate={handleAdminValidate}
-            onAdminInvalidate={handleAdminInvalidate}
-            isPendingSubStepId={pendingSubStepId}
-            defaultOpen={
-              index === firstIncompleteIndex
-              || (firstIncompleteIndex === -1 && index === pathway.stages.length - 1)
-            }
-          />
-        ))}
-      </div>
+      <StaffEditablePathwayTimeline pathway={pathway} candidateId={candidateId} />
     </div>
   )
 }

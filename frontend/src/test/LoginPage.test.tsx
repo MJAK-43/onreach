@@ -52,6 +52,10 @@ describe('LoginPage', () => {
       'href',
       '/forgot-password',
     )
+    expect(screen.getByRole('link', { name: /créer un compte/i })).toHaveAttribute(
+      'href',
+      '/register',
+    )
   })
 
   it('soumet les identifiants et redirige après connexion', async () => {

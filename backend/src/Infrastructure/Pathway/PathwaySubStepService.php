@@ -7,6 +7,7 @@ namespace App\Infrastructure\Pathway;
 use App\Entity\Candidate;
 use App\Entity\CandidatePathwaySubStep;
 use App\Entity\User;
+use App\Repository\CandidatePathwayRepository;
 use App\Repository\PathwaySettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -17,6 +18,7 @@ final readonly class PathwaySubStepService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private PathwaySettingRepository $settingRepository,
+        private CandidatePathwayRepository $pathwayRepository,
         private PathwayProgressCalculator $progressCalculator,
         private PathwayAuditLogger $auditLogger,
         private PathwayEventNotifier $eventNotifier,
@@ -38,13 +40,12 @@ final readonly class PathwaySubStepService
         }
 
         $pathway = $subStep->getCandidateStage()->getCandidatePathway();
-        $doubleValidation = $this->settingRepository
-            ->findOneByPathwayCode($pathway->getPathwayTemplate()->getCode())
-            ?->isDoubleValidationEnabled() ?? false;
+        $setting = $this->settingRepository->findOneByPathwayCode($pathway->getPathwayTemplate()->getCode());
+        $context = PathwayValidationContext::fromSetting($setting);
 
         $counselorBefore = null !== $subStep->getCounselorValidatedAt();
         $adminBefore = null !== $subStep->getAdminValidatedAt();
-        $validatedBefore = $subStep->isValidated($doubleValidation);
+        $validatedBefore = $context->isSubStepValidated($subStep);
 
         $isAdmin = $actor->hasRole('ADMIN') || $actor->hasRole('SUPER_ADMIN');
         $isCounselor = $actor->hasRole('COUNSELOR') || $isAdmin;
@@ -89,14 +90,21 @@ final readonly class PathwaySubStepService
             }
         }
 
-        $this->progressCalculator->refresh($pathway);
+        $this->syncGrandfatheredValidation($subStep, $context->doubleValidationEnabled);
+        $this->entityManager->flush();
+
+        $pathwayForProgress = $this->pathwayRepository->findOneForProgressRefresh($pathway->getId());
+        if ($pathwayForProgress) {
+            $this->progressCalculator->refresh($pathwayForProgress);
+        }
+
         $this->auditLogger->log(
             $candidate,
             'substep.validation_updated',
-            $pathway,
+            $pathwayForProgress ?? $pathway,
             $subStep,
             [
-                'validated' => $subStep->isValidated($doubleValidation),
+                'validated' => $context->isSubStepValidated($subStep),
                 'subStepTitle' => $subStep->getSubStepTemplate()->getTitle(),
             ],
             $actor,
@@ -105,10 +113,10 @@ final readonly class PathwaySubStepService
 
         $this->eventNotifier->notifyValidationUpdated(
             $candidate,
-            $pathway,
+            $pathwayForProgress ?? $pathway,
             $subStep,
             $actor,
-            $doubleValidation,
+            $context,
             $counselorBefore,
             $adminBefore,
             $validatedBefore,
@@ -116,5 +124,24 @@ final readonly class PathwaySubStepService
         $this->entityManager->flush();
 
         return $subStep;
+    }
+
+    private function syncGrandfatheredValidation(CandidatePathwaySubStep $subStep, bool $doubleValidation): void
+    {
+        if (null === $subStep->getCounselorValidatedAt()) {
+            $subStep->setGrandfatheredValidation(false);
+
+            return;
+        }
+
+        if (!$doubleValidation) {
+            $subStep->setGrandfatheredValidation(true);
+
+            return;
+        }
+
+        if (null !== $subStep->getAdminValidatedAt()) {
+            $subStep->setGrandfatheredValidation(false);
+        }
     }
 }

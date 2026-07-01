@@ -27,6 +27,7 @@ final readonly class PathwayTemplateSerializer
             'name' => $template->getName(),
             'campaignId' => $template->getCampaign()->getId()->toRfc4122(),
             'campaignYear' => $template->getCampaign()->getYear(),
+            'campaignStartDate' => $template->getCampaign()->getStartDate()->format('Y-m-d'),
             'stageCount' => $stageCount,
             'subStepCount' => $subStepCount,
         ];

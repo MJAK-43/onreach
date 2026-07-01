@@ -151,6 +151,13 @@ export function LoginPage() {
               Mot de passe oublié ?
             </Link>
           </p>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Pas encore de compte ?{' '}
+            <Link to="/register" className="text-primary hover:underline">
+              Créer un compte
+            </Link>
+          </p>
         </form>
       </CardContent>
     </Card>

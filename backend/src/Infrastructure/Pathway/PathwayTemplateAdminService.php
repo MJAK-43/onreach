@@ -25,6 +25,7 @@ final readonly class PathwayTemplateAdminService
         private PathwayStageTemplateRepository $stageRepository,
         private PathwaySubStepTemplateRepository $subStepRepository,
         private PathwayTemplateSerializer $serializer,
+        private PathwayDueDateSyncService $dueDateSyncService,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -135,8 +136,11 @@ final readonly class PathwayTemplateAdminService
         }
 
         $this->entityManager->flush();
+        $syncedCount = $this->dueDateSyncService->syncTemplateSubStep($subStep);
+        $detail = $this->serializer->serializeDetail($subStep->getStageTemplate()->getPathwayTemplate());
+        $detail['syncedCount'] = $syncedCount;
 
-        return $this->serializer->serializeDetail($subStep->getStageTemplate()->getPathwayTemplate());
+        return $detail;
     }
 
     /**
@@ -202,8 +206,24 @@ final readonly class PathwayTemplateAdminService
         }
 
         $this->entityManager->flush();
+        $syncedCount = $this->dueDateSyncService->syncCampaign($campaign);
+        $serialized = $this->serializeCampaign($campaign);
+        $serialized['syncedCount'] = $syncedCount;
 
-        return $this->serializeCampaign($campaign);
+        return $serialized;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function syncCampaignDueDates(string $campaignId): array
+    {
+        $campaign = $this->loadCampaign($campaignId);
+        $syncedCount = $this->dueDateSyncService->syncCampaign($campaign);
+        $serialized = $this->serializeCampaign($campaign);
+        $serialized['syncedCount'] = $syncedCount;
+
+        return $serialized;
     }
 
     /**

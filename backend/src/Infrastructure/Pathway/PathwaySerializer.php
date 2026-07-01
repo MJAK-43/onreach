@@ -41,7 +41,7 @@ final readonly class PathwaySerializer
         $template = $pathway->getPathwayTemplate();
         $settings ??= $this->settingRepository->findAllIndexedByCode();
         $code = $template->getCode()->value;
-        $doubleValidation = isset($settings[$code]) && $settings[$code]->isDoubleValidationEnabled();
+        $context = PathwayValidationContext::fromSetting($settings[$code] ?? null);
 
         return [
             'id' => $pathway->getId()->toRfc4122(),
@@ -51,10 +51,10 @@ final readonly class PathwaySerializer
             'statusLabel' => $pathway->getStatus()->label(),
             'progressPercent' => $pathway->getProgressPercent(),
             'blockedReason' => $pathway->getBlockedReason(),
-            'doubleValidationEnabled' => $doubleValidation,
+            'doubleValidationEnabled' => $context->doubleValidationEnabled,
             'updatedAt' => $pathway->getUpdatedAt()->format(\DateTimeInterface::ATOM),
             'stages' => array_map(
-                fn (CandidatePathwayStage $stage) => $this->serializeStage($stage, $doubleValidation),
+                fn (CandidatePathwayStage $stage) => $this->serializeStage($stage, $context),
                 $pathway->getStages()->toArray(),
             ),
         ];
@@ -63,7 +63,7 @@ final readonly class PathwaySerializer
     /**
      * @return array<string, mixed>
      */
-    private function serializeStage(CandidatePathwayStage $stage, bool $doubleValidation): array
+    private function serializeStage(CandidatePathwayStage $stage, PathwayValidationContext $context): array
     {
         $template = $stage->getStageTemplate();
 
@@ -74,7 +74,7 @@ final readonly class PathwaySerializer
             'sortOrder' => $stage->getSortOrder(),
             'progressPercent' => $stage->getProgressPercent(),
             'subSteps' => array_map(
-                fn (CandidatePathwaySubStep $subStep) => $this->serializeSubStep($subStep, $doubleValidation),
+                fn (CandidatePathwaySubStep $subStep) => $this->serializeSubStep($subStep, $context),
                 $stage->getSubSteps()->toArray(),
             ),
         ];
@@ -83,7 +83,7 @@ final readonly class PathwaySerializer
     /**
      * @return array<string, mixed>
      */
-    private function serializeSubStep(CandidatePathwaySubStep $subStep, bool $doubleValidation): array
+    private function serializeSubStep(CandidatePathwaySubStep $subStep, PathwayValidationContext $context): array
     {
         $template = $subStep->getSubStepTemplate();
         $counselor = $subStep->getCounselorValidatedBy();
@@ -96,7 +96,9 @@ final readonly class PathwaySerializer
             'required' => $template->isRequired(),
             'sortOrder' => $subStep->getSortOrder(),
             'dueDate' => $subStep->getDueDate()?->format('Y-m-d'),
-            'validated' => $subStep->isValidated($doubleValidation),
+            'validated' => $context->isSubStepValidated($subStep),
+            'pendingAdminValidation' => $context->isPendingAdminValidation($subStep),
+            'grandfatheredValidation' => $subStep->isGrandfatheredValidation(),
             'counselorValidatedAt' => $subStep->getCounselorValidatedAt()?->format(\DateTimeInterface::ATOM),
             'counselorValidatedBy' => $counselor ? $this->serializeUser($counselor) : null,
             'adminValidatedAt' => $subStep->getAdminValidatedAt()?->format(\DateTimeInterface::ATOM),

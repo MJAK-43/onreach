@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchCandidates, fetchUsers, type UserListItem } from '@/lib/api'
+import { fetchCandidates, fetchRoles, fetchUsers } from '@/lib/api'
+import { isCounselorUser } from '@/lib/user-roles'
 import {
   Card,
   CardContent,
@@ -7,16 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-
-function isCounselor(user: UserListItem): boolean {
-  if (!user.roles?.length) return false
-  return user.roles.some((role) => {
-    if (typeof role === 'string') {
-      return role.includes('COUNSELOR')
-    }
-    return role.code === 'COUNSELOR'
-  })
-}
 
 function counselorCandidateCount(
   counselorId: string,
@@ -31,9 +22,11 @@ function counselorCandidateCount(
 
 export function CounselorsPage() {
   const usersQuery = useQuery({ queryKey: ['users'], queryFn: fetchUsers })
+  const rolesQuery = useQuery({ queryKey: ['roles'], queryFn: fetchRoles })
   const candidatesQuery = useQuery({ queryKey: ['candidates'], queryFn: fetchCandidates })
 
-  const counselors = (usersQuery.data ?? []).filter(isCounselor)
+  const roles = rolesQuery.data ?? []
+  const counselors = (usersQuery.data ?? []).filter((user) => isCounselorUser(user, roles))
   const candidates = candidatesQuery.data ?? []
 
   return (

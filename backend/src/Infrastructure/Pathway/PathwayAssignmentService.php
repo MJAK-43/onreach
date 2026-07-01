@@ -73,6 +73,70 @@ final readonly class PathwayAssignmentService
         $this->entityManager->flush();
     }
 
+    /** Recrée les parcours à partir des templates courants (données démo). */
+    public function reassignForCandidate(Candidate $candidate): void
+    {
+        $studyType = $candidate->getStudyApplicationType();
+        if (!$studyType instanceof StudyApplicationType) {
+            return;
+        }
+
+        $campaign = $this->campaignRepository->findActive()
+            ?? $this->campaignRepository->findOneBy(['year' => 2026, 'active' => true]);
+        if (!$campaign instanceof Campaign) {
+            return;
+        }
+
+        $this->removePathwaysForCandidate($candidate);
+        $this->entityManager->flush();
+
+        foreach (PathwayTemplateDefinitions::codesForStudyType($studyType) as $code) {
+            $template = $this->findTemplateForCampaign($campaign, $code);
+            if (!$template instanceof PathwayTemplate) {
+                continue;
+            }
+
+            $pathway = $this->instantiatePathway($candidate, $template, $campaign);
+            $this->entityManager->persist($pathway);
+            $candidate->addPathway($pathway);
+            $this->auditLogger->log($candidate, 'pathway.assigned', $pathway, null, [
+                'pathwayCode' => $code->value,
+                'studyApplicationType' => $studyType->value,
+                'reassigned' => true,
+            ]);
+        }
+
+        $this->entityManager->flush();
+    }
+
+    public function assignLegacyPathwayIfMissing(Candidate $candidate, \App\Domain\Pathway\Enum\PathwayCode $code): void
+    {
+        $campaign = $this->campaignRepository->findActive()
+            ?? $this->campaignRepository->findOneBy(['year' => 2026, 'active' => true]);
+        if (!$campaign instanceof Campaign) {
+            return;
+        }
+
+        $template = $this->findTemplateForCampaign($campaign, $code);
+        if (!$template instanceof PathwayTemplate) {
+            return;
+        }
+
+        if ($this->hasPathway($candidate, $template)) {
+            return;
+        }
+
+        $pathway = $this->instantiatePathway($candidate, $template, $campaign);
+        $this->entityManager->persist($pathway);
+        $candidate->addPathway($pathway);
+        $this->auditLogger->log($candidate, 'pathway.assigned', $pathway, null, [
+            'pathwayCode' => $code->value,
+            'studyApplicationType' => $candidate->getStudyApplicationType()?->value,
+            'legacy' => true,
+        ]);
+        $this->entityManager->flush();
+    }
+
     private function hasPathway(Candidate $candidate, PathwayTemplate $template): bool
     {
         foreach ($candidate->getPathways() as $pathway) {

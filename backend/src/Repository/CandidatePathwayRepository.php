@@ -95,4 +95,17 @@ final class CandidatePathwayRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findOneForProgressRefresh(Uuid $pathwayId): ?CandidatePathway
+    {
+        return $this->createQueryBuilder('cp')
+            ->leftJoin('cp.stages', 'st')->addSelect('st')
+            ->leftJoin('st.subSteps', 'ss')->addSelect('ss')
+            ->leftJoin('ss.subStepTemplate', 'sst')->addSelect('sst')
+            ->leftJoin('cp.pathwayTemplate', 'pt')->addSelect('pt')
+            ->where('cp.id = :pathwayId')
+            ->setParameter('pathwayId', $pathwayId, 'uuid')
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

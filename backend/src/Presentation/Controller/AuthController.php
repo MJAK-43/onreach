@@ -13,9 +13,13 @@ use App\Application\Auth\Command\LoginCommandHandler;
 use App\Application\Auth\Command\MfaDisableCommandHandler;
 use App\Application\Auth\Command\MfaEnableCommandHandler;
 use App\Application\Auth\Command\MfaSetupCommandHandler;
+use App\Application\Auth\Command\RegisterCommand;
+use App\Application\Auth\Command\RegisterCommandHandler;
 use App\Application\Auth\Command\ResetPasswordCommand;
 use App\Application\Auth\Command\ResetPasswordCommandHandler;
 use App\Application\Auth\DTO\LoginRequest;
+use App\Application\Auth\DTO\RegisterRequest;
+use App\Domain\Pathway\Enum\StudyApplicationType;
 use App\Domain\Security\SecurityEventType;
 use App\Entity\User;
 use App\Infrastructure\Security\SecurityLogService;
@@ -50,6 +54,31 @@ final class AuthController extends AbstractController
         }
 
         return new JsonResponse($result);
+    }
+
+    #[Route('/register', name: 'auth_register', methods: ['POST'])]
+    public function register(
+        #[MapRequestPayload] RegisterRequest $registerRequest,
+        Request $request,
+        RegisterCommandHandler $handler,
+    ): JsonResponse {
+        $studyType = StudyApplicationType::tryFrom($registerRequest->studyApplicationType);
+        if (!$studyType instanceof StudyApplicationType) {
+            throw new \Symfony\Component\HttpKernel\Exception\BadRequestHttpException('Type de candidature invalide.');
+        }
+
+        return new JsonResponse($handler(new RegisterCommand(
+            firstName: $registerRequest->firstName,
+            lastName: $registerRequest->lastName,
+            email: $registerRequest->email,
+            password: $registerRequest->password,
+            nationality: $registerRequest->nationality,
+            studyApplicationType: $studyType,
+            phone: $registerRequest->phone,
+            city: $registerRequest->city,
+            country: $registerRequest->country,
+            ip: $request->getClientIp(),
+        )));
     }
 
     #[Route('/logout', name: 'auth_logout', methods: ['POST'])]

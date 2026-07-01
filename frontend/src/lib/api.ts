@@ -40,6 +40,20 @@ export interface LoginResponse {
   requiresMfa?: boolean
 }
 
+export interface RegisterRequest {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  nationality: string
+  studyApplicationType: 'first_year' | 'continuing'
+  phone?: string
+  city?: string
+  country?: string
+}
+
+export type RegisterResponse = LoginResponse
+
 export interface UserRoleRef {
   id?: string
   code?: string
@@ -194,6 +208,19 @@ export async function fetchHealth(): Promise<HealthResponse> {
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
   const data = await apiRequest<LoginResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, false)
+
+  if (data.token && data.refreshToken) {
+    setTokens(data.token, data.refreshToken)
+  }
+
+  return data
+}
+
+export async function register(payload: RegisterRequest): Promise<RegisterResponse> {
+  const data = await apiRequest<RegisterResponse>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, false)
@@ -399,20 +426,9 @@ export async function assignCandidateCounselor(
   candidateId: string,
   counselorId: string | null,
 ): Promise<CandidateListItem> {
-  const candidate = await fetchCandidate(candidateId)
-  return apiRequest<CandidateListItem>(`/api/candidates/${candidateId}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      firstName: candidate.firstName,
-      lastName: candidate.lastName,
-      email: candidate.email,
-      nationality: candidate.nationality,
-      status: candidate.status,
-      phone: candidate.phone ?? undefined,
-      city: candidate.city ?? undefined,
-      country: candidate.country ?? undefined,
-      assignedCounselor: counselorId ? `/api/users/${counselorId}` : null,
-    }),
+  return apiRequest<CandidateListItem>(`/api/admin/candidates/${candidateId}/counselor`, {
+    method: 'PATCH',
+    body: JSON.stringify({ counselorId }),
   })
 }
 

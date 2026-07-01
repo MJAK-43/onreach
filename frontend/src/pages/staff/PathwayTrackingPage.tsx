@@ -10,7 +10,7 @@ import {
   type PathwayTrackingFilters,
   type PathwayTrackingRow,
 } from '@/lib/pathway-tracking-api'
-import { PATHWAY_LABELS, type PathwayCode } from '@/lib/pathways-api'
+import { staffPathwayRoute, PATHWAY_LABELS, type PathwayCode } from '@/lib/pathways-api'
 import { formatRelativeDate } from '@/lib/candidate-utils'
 
 const STATUS_OPTIONS = [
@@ -64,7 +64,7 @@ function TrackingRow({ row }: { row: PathwayTrackingRow }) {
       <td className="py-3 pr-4 text-muted-foreground">{formatRelativeDate(row.updatedAt)}</td>
       <td className="py-3">
         <Button variant="outline" size="sm" asChild>
-          <Link to={`/candidates/${row.candidateId}`}>Voir</Link>
+          <Link to={staffPathwayRoute(row.candidateId, row.pathwayCode)}>Voir</Link>
         </Button>
       </td>
     </tr>

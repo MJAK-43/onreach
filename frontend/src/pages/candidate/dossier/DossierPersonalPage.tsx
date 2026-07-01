@@ -1,15 +1,13 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, type MyProfile, updateMyProfile } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import type { MyProfile } from '@/lib/profile-api'
 
 const EMPTY_PERSONAL: MyProfile['personal'] = {
   firstName: '',
@@ -27,26 +25,28 @@ const EMPTY_PERSONAL: MyProfile['personal'] = {
 }
 
 export function DossierPersonalPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<MyProfile['personal'] | null>(null)
-  const personal = draft ?? profile?.personal ?? EMPTY_PERSONAL
-
-  const autoSave = useAutoSave(personal, async (payload) => {
-    await updateMyProfile({ personal: payload })
-  })
+  const { profile, data: personal, setData, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave('personal', (value) => value.personal, EMPTY_PERSONAL)
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
   }
 
   const set = (key: keyof typeof personal, value: string) =>
-    setDraft((prev) => ({ ...(prev ?? profile?.personal ?? EMPTY_PERSONAL), [key]: value }))
+    setData((prev) => ({ ...prev, [key]: value }))
 
   return (
-    <SectionCard title="Informations personnelles" footer={<SaveIndicator {...autoSave} />}>
+    <SectionCard
+      title="Informations personnelles"
+      footer={
+        <SaveFooter
+          status={autoSave.status}
+          error={autoSave.error}
+          onSave={saveNow}
+          isSaving={isSaving}
+        />
+      }
+    >
       <FormGrid>
         <FormField label="Nom" id="lastName" value={personal.lastName} onChange={(v) => set('lastName', v)} />
         <FormField label="Prénom" id="firstName" value={personal.firstName} onChange={(v) => set('firstName', v)} />

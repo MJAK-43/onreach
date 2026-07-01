@@ -1,16 +1,14 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, type LanguageCertificate, type MyProfile, updateMyProfile } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import { type LanguageCertificate, type MyProfile } from '@/lib/profile-api'
 
 const EMPTY_LANGUAGES: NonNullable<MyProfile['languages']> = {
   frenchLevel: null,
@@ -20,17 +18,12 @@ const EMPTY_LANGUAGES: NonNullable<MyProfile['languages']> = {
 }
 
 export function DossierLanguagesPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<NonNullable<MyProfile['languages']> | null>(null)
-  const languages = draft ?? profile?.languages ?? EMPTY_LANGUAGES
-  const patchLanguages = (next: NonNullable<MyProfile['languages']>) => setDraft(next)
-
-  const autoSave = useAutoSave(languages, async (payload) => {
-    await updateMyProfile({ languages: payload })
-  })
+  const { profile, data: languages, setData: patchLanguages, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave(
+      'languages',
+      (value) => value.languages ?? EMPTY_LANGUAGES,
+      EMPTY_LANGUAGES,
+    )
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
@@ -38,11 +31,21 @@ export function DossierLanguagesPage() {
 
   const addCert = () => {
     const cert: LanguageCertificate = { type: 'tcf', score: '', issueDate: '', expirationDate: '' }
-    patchLanguages({ ...languages, certificates: [...languages.certificates, cert] })
+    patchLanguages((prev) => ({ ...prev, certificates: [...prev.certificates, cert] }))
   }
 
   return (
-    <SectionCard title="Langues" footer={<SaveIndicator {...autoSave} />}>
+    <SectionCard
+      title="Langues"
+      footer={
+        <SaveFooter
+          status={autoSave.status}
+          error={autoSave.error}
+          onSave={saveNow}
+          isSaving={isSaving}
+        />
+      }
+    >
       <FormGrid>
         <FormField label="Français" id="frenchLevel" value={languages.frenchLevel ?? ''} onChange={(v) => patchLanguages({ ...languages, frenchLevel: v })} />
         <FormField label="Anglais" id="englishLevel" value={languages.englishLevel ?? ''} onChange={(v) => patchLanguages({ ...languages, englishLevel: v })} />

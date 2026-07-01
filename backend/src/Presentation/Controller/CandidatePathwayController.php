@@ -81,7 +81,12 @@ final class CandidatePathwayController extends AbstractController
         }
 
         $updated = $this->subStepService->updateValidation($candidate, $subStep, $payload, $user);
-        $pathway = $updated->getCandidateStage()->getCandidatePathway();
+        $pathway = $this->pathwayRepository->findOneForProgressRefresh(
+            $updated->getCandidateStage()->getCandidatePathway()->getId(),
+        );
+        if (!$pathway) {
+            throw new NotFoundHttpException('Parcours introuvable.');
+        }
 
         return new JsonResponse([
             'pathway' => $this->serializer->serializePathway($pathway),

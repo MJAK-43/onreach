@@ -28,7 +28,7 @@ final readonly class PathwayEventNotifier
         CandidatePathway $pathway,
         CandidatePathwaySubStep $subStep,
         User $actor,
-        bool $doubleValidation,
+        PathwayValidationContext $context,
         bool $counselorBefore,
         bool $adminBefore,
         bool $validatedBefore,
@@ -37,10 +37,10 @@ final readonly class PathwayEventNotifier
         $subStepTitle = $subStep->getSubStepTemplate()->getTitle();
         $counselorNow = null !== $subStep->getCounselorValidatedAt();
         $adminNow = null !== $subStep->getAdminValidatedAt();
-        $validatedNow = $subStep->isValidated($doubleValidation);
+        $validatedNow = $context->isSubStepValidated($subStep);
         $candidateUser = $this->userRepository->findByEmail($candidate->getEmail());
 
-        if (!$counselorBefore && $counselorNow && $doubleValidation) {
+        if (!$counselorBefore && $counselorNow && $context->doubleValidationEnabled) {
             foreach ($this->findAdminUsers() as $admin) {
                 if ($admin->getId()->toRfc4122() === $actor->getId()->toRfc4122()) {
                     continue;

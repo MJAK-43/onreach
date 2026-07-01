@@ -1,15 +1,13 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
   DossierError,
   DossierLoading,
   FormField,
   FormGrid,
-  SaveIndicator,
+  SaveFooter,
   SectionCard,
 } from '@/components/candidate/dossier/DossierComponents'
-import { useAutoSave } from '@/hooks/useAutoSave'
-import { fetchMyProfile, type MyProfile, updateMyProfile } from '@/lib/profile-api'
+import { useDossierSectionSave } from '@/hooks/useDossierSectionSave'
+import type { MyProfile } from '@/lib/profile-api'
 
 const EMPTY_CONTACT: MyProfile['contact'] = {
   address: null,
@@ -24,26 +22,28 @@ const EMPTY_CONTACT: MyProfile['contact'] = {
 }
 
 export function DossierContactPage() {
-  const { data: profile, isLoading, isError } = useQuery({
-    queryKey: ['my-profile'],
-    queryFn: fetchMyProfile,
-  })
-  const [draft, setDraft] = useState<MyProfile['contact'] | null>(null)
-  const contact = draft ?? profile?.contact ?? EMPTY_CONTACT
-
-  const autoSave = useAutoSave(contact, async (payload) => {
-    await updateMyProfile({ contact: payload })
-  })
+  const { profile, data: contact, setData, isLoading, isError, autoSave, saveNow, isSaving } =
+    useDossierSectionSave('contact', (value) => value.contact, EMPTY_CONTACT)
 
   if (isLoading || !profile) {
     return isError ? <DossierError /> : <DossierLoading />
   }
 
   const set = (key: keyof typeof contact, value: string) =>
-    setDraft((prev) => ({ ...(prev ?? profile?.contact ?? EMPTY_CONTACT), [key]: value }))
+    setData((prev) => ({ ...prev, [key]: value }))
 
   return (
-    <SectionCard title="Coordonnées" footer={<SaveIndicator {...autoSave} />}>
+    <SectionCard
+      title="Coordonnées"
+      footer={
+        <SaveFooter
+          status={autoSave.status}
+          error={autoSave.error}
+          onSave={saveNow}
+          isSaving={isSaving}
+        />
+      }
+    >
       <FormGrid>
         <FormField label="Adresse" id="address" value={contact.address ?? ''} onChange={(v) => set('address', v)} className="sm:col-span-2" />
         <FormField label="Ville" id="city" value={contact.city ?? ''} onChange={(v) => set('city', v)} />

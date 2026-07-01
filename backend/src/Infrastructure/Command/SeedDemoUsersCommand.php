@@ -11,11 +11,13 @@ use App\Domain\Candidate\Enum\DocumentType;
 use App\Domain\Candidate\Enum\ParcoursupWishStatus;
 use App\Domain\Candidate\Enum\ParisSaclayDegreeLevel;
 use App\Domain\Candidate\Enum\ParisSaclayStatus;
+use App\Domain\Pathway\Enum\PathwayCode;
 use App\Domain\Pathway\Enum\StudyApplicationType;
 use App\Domain\User\Enum\SystemRole;
 use App\Entity\CampusFranceApplication;
 use App\Entity\Candidate;
 use App\Entity\CandidateDocument;
+use App\Entity\CandidatePathway;
 use App\Entity\ParcoursupApplication;
 use App\Entity\ParcoursupWish;
 use App\Entity\ParisSaclayApplication;
@@ -23,6 +25,7 @@ use App\Entity\User;
 use App\Infrastructure\Candidate\CandidateReferenceGenerator;
 use App\Infrastructure\Candidate\CandidateTimelineService;
 use App\Infrastructure\Pathway\PathwayAssignmentService;
+use App\Infrastructure\Pathway\PathwayProgressCalculator;
 use App\Repository\CandidateRepository;
 use App\Repository\RoleRepository;
 use App\Repository\UserRepository;
@@ -44,6 +47,7 @@ final class SeedDemoUsersCommand extends Command
         private CandidateReferenceGenerator $referenceGenerator,
         private CandidateTimelineService $timelineService,
         private PathwayAssignmentService $pathwayAssignmentService,
+        private PathwayProgressCalculator $pathwayProgressCalculator,
         private UserPasswordHasherInterface $passwordHasher,
         private EntityManagerInterface $entityManager,
     ) {
@@ -58,6 +62,8 @@ final class SeedDemoUsersCommand extends Command
         $counselorPassword = $_ENV['SEED_COUNSELOR_PASSWORD'] ?? 'Counselor@OnReach12!';
         $candidateUserEmail = $_ENV['SEED_CANDIDATE_USER_EMAIL'] ?? 'mohamed.koffi@onreach.inovixora.fr';
         $candidateUserPassword = $_ENV['SEED_CANDIDATE_USER_PASSWORD'] ?? 'Candidate@OnReach12!';
+        $continuingUserEmail = $_ENV['SEED_CANDIDATE_CONTINUING_EMAIL'] ?? 'ama.diallo@onreach.inovixora.fr';
+        $continuingUserPassword = $_ENV['SEED_CANDIDATE_CONTINUING_PASSWORD'] ?? 'Continuing@OnReach12!';
 
         $counselorRole = $this->roleRepository->findByCode(SystemRole::COUNSELOR->value);
         $candidateRole = $this->roleRepository->findByCode(SystemRole::CANDIDATE->value);
@@ -125,12 +131,6 @@ final class SeedDemoUsersCommand extends Command
             $parcoursup->addWish($wish2);
             $dossier->setParcoursupApplication($parcoursup);
 
-            $parisSaclay = new ParisSaclayApplication();
-            $parisSaclay->setDegreeLevel(ParisSaclayDegreeLevel::MASTER);
-            $parisSaclay->setResearchProject('Apprentissage profond appliqué à la santé');
-            $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
-            $dossier->setParisSaclayApplication($parisSaclay);
-
             $motivation = new CandidateDocument($dossier, DocumentType::MOTIVATION_LETTER, DocumentStatus::UPLOADED);
             $transcript = new CandidateDocument($dossier, DocumentType::TRANSCRIPT, DocumentStatus::VALIDATED);
             $dossier->addDocument($motivation);
@@ -141,7 +141,7 @@ final class SeedDemoUsersCommand extends Command
             $this->timelineService->record($dossier, 'document.uploaded', 'Passeport ajouté');
             $this->timelineService->record($dossier, 'document.validated', 'CV validé');
             $this->timelineService->record($dossier, 'candidate.status_changed', 'Admission obtenue');
-            $this->pathwayAssignmentService->assignForCandidate($dossier);
+            $this->syncMohamedDevPortalState($dossier);
             $io->success('Dossier démo Mohamed Koffi créé.');
         } else {
             if (null === $dossier->getAssignedCounselor()) {
@@ -150,10 +150,17 @@ final class SeedDemoUsersCommand extends Command
             if (null === $dossier->getStudyApplicationType()) {
                 $dossier->setStudyApplicationType(StudyApplicationType::FIRST_YEAR);
             }
-            $this->ensureDemoApplications($dossier);
-            $this->pathwayAssignmentService->assignForCandidate($dossier);
-            $io->note('Dossier démo Mohamed Koffi existant.');
+            $this->syncMohamedDevPortalState($dossier);
+            $io->note('Dossier démo Mohamed Koffi existant — aligné sur l’état DEV.');
         }
+
+        $this->seedContinuingDemoCandidate(
+            $counselor,
+            $candidateRole,
+            $continuingUserEmail,
+            $continuingUserPassword,
+            $io,
+        );
 
         $this->seedExtraCandidates($counselor);
         $this->entityManager->flush();
@@ -165,22 +172,187 @@ final class SeedDemoUsersCommand extends Command
 
     private function ensureDemoApplications(Candidate $dossier): void
     {
-        if (null === $dossier->getParcoursupApplication()) {
-            $parcoursup = new ParcoursupApplication();
-            $parcoursup->addWish(new ParcoursupWish(1, 'Université Paris-Saclay', 'Licence Informatique', ParcoursupWishStatus::ACCEPTE));
-            $dossier->setParcoursupApplication($parcoursup);
+        if (StudyApplicationType::FIRST_YEAR === $dossier->getStudyApplicationType()) {
+            if (null === $dossier->getParcoursupApplication()) {
+                $parcoursup = new ParcoursupApplication();
+                $parcoursup->setIneNumber('123456789AB');
+                $parcoursup->setHighSchool('Lycée Moderne d\'Abidjan');
+                $parcoursup->setMotivationProject('Projet d\'études en informatique et IA');
+                $wish = new ParcoursupWish(1, 'Université Paris-Saclay', 'Licence Informatique', ParcoursupWishStatus::ACCEPTE);
+                $wish->setSubmittedAt(new \DateTimeImmutable('-30 days'));
+                $parcoursup->addWish($wish);
+                $wish2 = new ParcoursupWish(2, 'Sorbonne Université', 'Licence Mathématiques', ParcoursupWishStatus::LISTE_ATTENTE);
+                $wish2->setSubmittedAt(new \DateTimeImmutable('-28 days'));
+                $parcoursup->addWish($wish2);
+                $dossier->setParcoursupApplication($parcoursup);
+            }
         }
 
-        if (null === $dossier->getParisSaclayApplication()) {
-            $parisSaclay = new ParisSaclayApplication();
-            $parisSaclay->setDegreeLevel(ParisSaclayDegreeLevel::MASTER);
-            $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
-            $dossier->setParisSaclayApplication($parisSaclay);
+        if (StudyApplicationType::CONTINUING === $dossier->getStudyApplicationType()) {
+            if (null === $dossier->getParisSaclayApplication()) {
+                $parisSaclay = new ParisSaclayApplication();
+                $parisSaclay->setDegreeLevel(ParisSaclayDegreeLevel::MASTER);
+                $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
+                $dossier->setParisSaclayApplication($parisSaclay);
+            }
         }
 
         $campus = $dossier->getCampusFranceApplication();
         if ($campus instanceof CampusFranceApplication && CampusFranceStatus::DRAFT === $campus->getStatus()) {
             $campus->setStatus(CampusFranceStatus::ADMISSION_OBTAINED);
+        }
+
+        $parisSaclay = $dossier->getParisSaclayApplication();
+        if ($parisSaclay instanceof ParisSaclayApplication && ParisSaclayStatus::DRAFT === $parisSaclay->getStatus()) {
+            $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
+        }
+    }
+
+    /**
+     * État portail candidat Mohamed = DEV : Parcoursup + Campus France (première année).
+     */
+    private function syncMohamedDevPortalState(Candidate $dossier): void
+    {
+        $this->ensureDemoApplications($dossier);
+        $this->removeParisSaclayForFirstYear($dossier);
+        $this->pathwayAssignmentService->reassignForCandidate($dossier);
+
+        $counselor = $dossier->getAssignedCounselor();
+        if ($counselor instanceof User) {
+            $this->seedMohamedPathwayProgress($dossier, $counselor);
+        }
+    }
+
+    private function removeParisSaclayForFirstYear(Candidate $dossier): void
+    {
+        if (StudyApplicationType::FIRST_YEAR !== $dossier->getStudyApplicationType()) {
+            return;
+        }
+
+        if ($dossier->getParisSaclayApplication() instanceof ParisSaclayApplication) {
+            $dossier->setParisSaclayApplication(null);
+        }
+
+        foreach ($dossier->getPathways()->toArray() as $pathway) {
+            if (PathwayCode::PARIS_SACLAY === $pathway->getPathwayTemplate()->getCode()) {
+                $dossier->removePathway($pathway);
+                $this->entityManager->remove($pathway);
+            }
+        }
+    }
+
+    private function seedMohamedPathwayProgress(Candidate $dossier, User $counselor): void
+    {
+        $targets = [
+            PathwayCode::CAMPUS_FRANCE->value => 67,
+            PathwayCode::PARCOURSUP->value => 100,
+        ];
+
+        foreach ($dossier->getPathways() as $pathway) {
+            $code = $pathway->getPathwayTemplate()->getCode()->value;
+            $target = $targets[$code] ?? null;
+            if (null === $target) {
+                continue;
+            }
+
+            $this->resetPathwayDemoProgress($pathway);
+            $this->seedPathwayProgressToTarget($pathway, $target, $counselor);
+        }
+    }
+
+    private function resetPathwayDemoProgress(CandidatePathway $pathway): void
+    {
+        foreach ($pathway->getStages() as $stage) {
+            foreach ($stage->getSubSteps() as $subStep) {
+                $subStep->clearValidation();
+            }
+        }
+
+        $this->pathwayProgressCalculator->refresh($pathway);
+    }
+
+    private function seedPathwayProgressToTarget(CandidatePathway $pathway, int $targetPercent, User $counselor): void
+    {
+        foreach ($pathway->getStages() as $stage) {
+            foreach ($stage->getSubSteps() as $subStep) {
+                if (!$subStep->getSubStepTemplate()->isRequired()) {
+                    continue;
+                }
+
+                if ($subStep->isValidated(false)) {
+                    continue;
+                }
+
+                $subStep->validateByCounselor($counselor);
+                $subStep->setGrandfatheredValidation(true);
+                $this->pathwayProgressCalculator->refresh($pathway);
+
+                if ($pathway->getProgressPercent() >= $targetPercent) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private function seedContinuingDemoCandidate(
+        User $counselor,
+        \App\Entity\Role $candidateRole,
+        string $email,
+        string $password,
+        SymfonyStyle $io,
+    ): void {
+        $user = $this->userRepository->findByEmail($email);
+        if (!$user) {
+            $user = new User($email, 'Ama', 'Diallo');
+            $user->setPassword($this->passwordHasher->hashPassword($user, $password));
+            $user->addRole($candidateRole);
+            $this->userRepository->save($user, false);
+            $io->success(sprintf('Compte candidat poursuite créé : %s / %s', $email, $password));
+        } else {
+            $io->note(sprintf('Compte candidat poursuite existant : %s', $email));
+        }
+
+        $dossier = $this->candidateRepository->findOneBy(['email' => $email]);
+        if (!$dossier) {
+            $dossier = new Candidate('Ama', 'Diallo', $email, 'Sénégal');
+            $dossier->setReferenceNumber($this->referenceGenerator->generate());
+            $dossier->setStatus(CandidateStatus::IN_PROGRESS);
+            $dossier->setPhone('+221 77 000 00 00');
+            $dossier->setCity('Dakar');
+            $dossier->setCountry('Sénégal');
+            $dossier->setAssignedCounselor($counselor);
+            $dossier->setStudyApplicationType(StudyApplicationType::CONTINUING);
+
+            $passport = new CandidateDocument($dossier, DocumentType::PASSPORT, DocumentStatus::VALIDATED);
+            $transcript = new CandidateDocument($dossier, DocumentType::TRANSCRIPT, DocumentStatus::UPLOADED);
+            $dossier->addDocument($passport);
+            $dossier->addDocument($transcript);
+
+            $campusFrance = new CampusFranceApplication();
+            $campusFrance->setStudyProject('Doctorat en énergies renouvelables');
+            $campusFrance->setStatus(CampusFranceStatus::INTERVIEW_SCHEDULED);
+            $dossier->setCampusFranceApplication($campusFrance);
+
+            $parisSaclay = new ParisSaclayApplication();
+            $parisSaclay->setDegreeLevel(ParisSaclayDegreeLevel::DOCTORATE);
+            $parisSaclay->setResearchProject('Stockage d\'énergie solaire');
+            $parisSaclay->setStatus(ParisSaclayStatus::UNDER_REVIEW);
+            $dossier->setParisSaclayApplication($parisSaclay);
+
+            $this->candidateRepository->save($dossier, false);
+            $this->timelineService->record($dossier, 'candidate.created', 'Dossier candidat créé (poursuite d\'études)');
+            $this->pathwayAssignmentService->assignForCandidate($dossier);
+            $io->success('Dossier démo Ama Diallo (poursuite d\'études) créé.');
+        } else {
+            if (null === $dossier->getAssignedCounselor()) {
+                $dossier->setAssignedCounselor($counselor);
+            }
+            if (StudyApplicationType::CONTINUING !== $dossier->getStudyApplicationType()) {
+                $dossier->setStudyApplicationType(StudyApplicationType::CONTINUING);
+            }
+            $this->ensureDemoApplications($dossier);
+            $this->pathwayAssignmentService->reassignForCandidate($dossier);
+            $io->note('Dossier démo Ama Diallo existant — parcours Campus France + Paris-Saclay.');
         }
     }
 

@@ -41,6 +41,33 @@ export function SaveIndicator({ status, error }: { status: AutoSaveStatus; error
   )
 }
 
+export function SaveFooter({
+  status,
+  error,
+  onSave,
+  isSaving,
+}: {
+  status: AutoSaveStatus
+  error: string | null
+  onSave: () => void
+  isSaving?: boolean
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <SaveIndicator status={status} error={error} />
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={onSave}
+        disabled={isSaving || status === 'saving'}
+      >
+        Enregistrer
+      </Button>
+    </div>
+  )
+}
+
 export function CompletionPanel({ completion }: { completion: ProfileCompletion }) {
   const items = [
     { label: 'Profil', value: completion.profile },

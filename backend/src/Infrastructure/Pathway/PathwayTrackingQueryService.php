@@ -82,11 +82,11 @@ final readonly class PathwayTrackingQueryService
         $template = $pathway->getPathwayTemplate();
         $campaign = $template->getCampaign();
         $counselor = $candidate->getAssignedCounselor();
-        $doubleValidation = $this->settingRepository
-            ->findOneByPathwayCode($template->getCode())
-            ?->isDoubleValidationEnabled() ?? false;
+        $context = PathwayValidationContext::fromSetting(
+            $this->settingRepository->findOneByPathwayCode($template->getCode()),
+        );
 
-        $nextSubStep = $this->findNextPendingSubStep($pathway, $doubleValidation);
+        $nextSubStep = $this->findNextPendingSubStep($pathway, $context);
 
         return [
             'pathwayId' => $pathway->getId()->toRfc4122(),
@@ -114,13 +114,13 @@ final readonly class PathwayTrackingQueryService
         ];
     }
 
-    private function findNextPendingSubStep(CandidatePathway $pathway, bool $doubleValidation): ?CandidatePathwaySubStep
+    private function findNextPendingSubStep(CandidatePathway $pathway, PathwayValidationContext $context): ?CandidatePathwaySubStep
     {
         $pending = [];
 
         foreach ($pathway->getStages() as $stage) {
             foreach ($stage->getSubSteps() as $subStep) {
-                if (!$subStep->isValidated($doubleValidation)) {
+                if (!$context->isSubStepValidated($subStep)) {
                     $pending[] = $subStep;
                 }
             }

@@ -8,6 +8,7 @@ import { MainLayout } from '@/components/layout/MainLayout'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { RegisterPage } from '@/pages/RegisterPage'
 import { PermissionsPage } from '@/pages/PermissionsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
@@ -44,6 +45,8 @@ import { CounselorsPage } from '@/pages/admin/CounselorsPage'
 import { MatchingPage } from '@/pages/admin/MatchingPage'
 import { PathwaySettingsPage } from '@/pages/admin/PathwaySettingsPage'
 import { PathwayTrackingPage } from '@/pages/staff/PathwayTrackingPage'
+import { StaffCandidateDemarchesLayout } from '@/components/staff/pathways/StaffCandidateDemarchesLayout'
+import { StaffCandidatePathwayPage, StaffCandidatePathwayRedirect } from '@/pages/staff/StaffCandidatePathwayPage'
 import { ReportsPage } from '@/pages/admin/ReportsPage'
 import { DemarchesLayout } from '@/components/candidate/demarches/DemarchesLayout'
 import { CampusFrancePage } from '@/pages/candidate/demarches/CampusFrancePage'
@@ -57,6 +60,7 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },
     ],
@@ -134,6 +138,23 @@ export const router = createBrowserRouter([
             <PathwayTrackingPage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: 'pathways/tracking/:candidateId',
+        element: (
+          <ProtectedRoute permission="applications.view">
+            <StaffCandidatePathwayRedirect />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pathways/tracking/:candidateId/:pathwaySlug',
+        element: (
+          <ProtectedRoute permission="applications.view">
+            <StaffCandidateDemarchesLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <StaffCandidatePathwayPage /> }],
       },
       {
         path: 'candidates/new',

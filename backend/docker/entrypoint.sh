@@ -24,6 +24,9 @@ JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
 JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
 CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-}
 MESSENGER_TRANSPORT_DSN=${MESSENGER_TRANSPORT_DSN:-}
+MAILER_DSN=${MAILER_DSN:-null://null}
+MAILER_FROM=${MAILER_FROM:-noreply@onreach.inovixora.fr}
+FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
 DEFAULT_URI=${DEFAULT_URI:-http://localhost}
 EOF
 else
@@ -44,4 +47,5 @@ php bin/console app:seed:rbac --no-interaction || true
 php bin/console app:seed:checklist --no-interaction || true
 php bin/console app:seed:pathways --no-interaction || true
 php bin/console app:seed:demo-users --no-interaction || true
+php bin/console app:pathway:refresh-progress --no-interaction || true
 exec "$@"

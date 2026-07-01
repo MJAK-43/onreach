@@ -154,6 +154,62 @@ final class PathwayTrackingApiTest extends WebTestCase
         self::assertCount(1, $data['items']);
     }
 
+    public function testCounselorCanReadCandidateDemarchesOverview(): void
+    {
+        $client = static::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedRbac();
+        $this->seedPathways();
+        $this->seedDemoViaConsole();
+
+        $adminAuth = $this->loginAsAdmin($client);
+        $candidateId = $this->findDemoCandidateId($client, $adminAuth);
+
+        $counselorAuth = $this->loginAsCounselor($client);
+        $client->request(
+            'GET',
+            '/api/candidates/'.$candidateId.'/demarches/overview',
+            server: $this->jsonAuthHeaders($counselorAuth),
+        );
+        $this->assertResponseIsSuccessful();
+
+        $data = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertArrayHasKey('completion', $data);
+        self::assertArrayHasKey('procedures', $data);
+    }
+
+    public function testCandidateCannotReadOtherCandidateDemarches(): void
+    {
+        $client = static::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedRbac();
+        $this->seedPathways();
+        $this->seedDemoViaConsole();
+
+        $adminAuth = $this->loginAsAdmin($client);
+        $client->request('GET', '/api/candidates', server: $this->authHeaders($adminAuth));
+        $list = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $members = $list['member'] ?? $list['hydra:member'] ?? [];
+        $otherId = null;
+        foreach ($members as $member) {
+            if (($member['email'] ?? '') === 'ama.diallo@onreach.inovixora.fr') {
+                $otherId = $member['id'];
+                break;
+            }
+        }
+        self::assertNotNull($otherId);
+
+        $candidateAuth = $this->loginAsCandidate($client);
+        $client->request(
+            'GET',
+            '/api/candidates/'.$otherId.'/demarches/campus-france',
+            server: $this->jsonAuthHeaders($candidateAuth),
+        );
+        self::assertResponseStatusCodeSame(403);
+    }
+
     /**
      * @param array{token: string} $adminAuth
      *

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Domain\Pathway\Enum\PathwayCode;
+use App\Entity\CandidatePathway;
 use App\Entity\CandidatePathwaySubStep;
+use App\Entity\PathwaySubStepTemplate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
@@ -34,6 +37,19 @@ final class CandidatePathwaySubStepRepository extends ServiceEntityRepository
     /**
      * @return list<CandidatePathwaySubStep>
      */
+    public function findBySubStepTemplate(PathwaySubStepTemplate $template): array
+    {
+        return $this->createQueryBuilder('ss')
+            ->innerJoin('ss.subStepTemplate', 'sst')
+            ->where('sst.id = :templateId')
+            ->setParameter('templateId', $template->getId(), 'uuid')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return list<CandidatePathwaySubStep>
+     */
     public function findDueForReminder(\DateTimeImmutable $until): array
     {
         $today = new \DateTimeImmutable('today');
@@ -54,5 +70,37 @@ final class CandidatePathwaySubStepRepository extends ServiceEntityRepository
             ->orderBy('ss.dueDate', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return list<CandidatePathwaySubStep>
+     */
+    public function findByPathwayCode(PathwayCode $code): array
+    {
+        return $this->createQueryBuilder('ss')
+            ->innerJoin('ss.candidateStage', 's')
+            ->innerJoin('s.candidatePathway', 'cp')
+            ->innerJoin('cp.pathwayTemplate', 'pt')
+            ->where('pt.code = :code')
+            ->setParameter('code', $code->value)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return list<CandidatePathway>
+     */
+    public function findPathwaysByCode(PathwayCode $code): array
+    {
+        /** @var list<CandidatePathway> $pathways */
+        $pathways = $this->getEntityManager()->createQuery(
+            'SELECT DISTINCT cp FROM App\Entity\CandidatePathway cp
+             INNER JOIN cp.pathwayTemplate pt
+             WHERE pt.code = :code',
+        )
+            ->setParameter('code', $code->value)
+            ->getResult();
+
+        return $pathways;
     }
 }
